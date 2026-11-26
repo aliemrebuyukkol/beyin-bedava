@@ -1,0 +1,17 @@
+{
+  "name": "beyin-bedava",
+  "displayName": "Beyin-Bedava",
+  "version": "1.0.0",
+  "description": "Oyun projelerinde komut gerektirmeden otomatik devreye giren EOMM/SBMM, DDA, sanal ekonomi, reklam yerleşimi, satınalma (IAP) ekranı, algoritmik şeffaflık ve 5 katmanlı oyuncu koruma mimarisi.",
+  "author": {
+    "name": "Ali Emre Büyükkol",
+    "url": "https://github.com/aliemrebuyukkol"
+  },
+  "homepage": "https://github.com/aliemrebuyukkol/beyin-bedava",
+  "repository": "https://github.com/aliemrebuyukkol/beyin-bedava",
+  "suggestedPrompts": [
+    "Bu oyun projesini Beyin-Bedava mimarisiyle incele, düzenle ve uygula",
+    "Oyundaki reklam yerleşimlerini ve satınalma ekranlarını Beyin-Bedava kurallarına göre ayarla",
+    "Oyunun telemetri, reklam ve mağaza akışını 4 aşamalı Beyin-Bedava denetimiyle analiz et"
+  ]
+}
