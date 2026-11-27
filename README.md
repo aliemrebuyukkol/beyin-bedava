@@ -23,3 +23,11 @@ Detector is heuristic; config emission refuses non-game/unknown projects or over
 Existing 1.x configs should be reviewed, not silently overwritten. v2 removes live EOMM/hybrid modes from the config schema, requires zero monetization weight, and tightens DDA ceilings. Opt-in eligible features only; existing 1.x enabled settings are not automatically changed. See [examples](skills/beyin-bedava/examples/game-profiles.md) and [quality gates](skills/beyin-bedava/orchestration/quality.md).
 
 MIT license.
+
+## Örnek proje · Yankı Rotası
+
+Beyin-Bedava 2.1.0 ile geliştirilen dört bölümlük bir Godot bulmacası. Plakalara yankı bırakarak kapıları aç ve istasyondan çık.
+
+**[Web sürümünü indir](https://github.com/aliemrebuyukkol/beyin-bedava/archive/refs/heads/gh-pages.zip)** · [Godot kaynak projesi ve çalıştırma talimatları](examples/yanki-rotasi/)
+
+Web paketini açtıktan sonra `OYNAT.txt` içindeki adımlarla tarayıcıda çalıştır.
