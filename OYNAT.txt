@@ -1,0 +1,12 @@
+YANKI ROTASI
+
+Bu arşivi aç. Çıkardığın klasörün içinde aşağıdaki komutu çalıştır:
+
+    python3 -m http.server 8000 --bind 127.0.0.1
+
+Tarayıcıda http://127.0.0.1:8000 adresini aç. Oyun WebGL 2 destekleyen bir
+tarayıcı gerektirir. Oyun açıldıktan sonra internet bağlantısı gerekmez.
+
+Ok tuşları veya WASD ile hareket et. Plaka üzerindeyken Space ile yankı bırak.
+Z geri alır, H ipucu verir, R bölümü yeniden başlatır. Ekrandaki düğmelerle de
+oynayabilirsin. Açılan bölümler bu tarayıcıya kaydedilir.
