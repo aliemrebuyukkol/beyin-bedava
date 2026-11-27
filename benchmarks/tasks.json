@@ -22,5 +22,21 @@
     "domains": [[0, 1, 2, 3, 4, 5], [0, 1, 2, 3], [0, 1]],
     "cases": [[[0, 0, 0], 0], [[1, 3, 0], 0], [[2, 2, 0], 2], [[3, 1, 0], 5], [[5, 1, 0], 7], [[5, 0, 1], 0]],
     "bounds": [0, 7]
+  },
+  {
+    "id": "fair-window-scoring",
+    "brief": "Given elapsed_cs in centiseconds (0, 50, 200, 250), is_culprit (0 or 1), and combo (0..3), return score delta in [-40, 130]. Clicking an innocent (is_culprit == 0) returns -40. Clicking a culprit after 200 cs returns 0. Otherwise award min(130, 100 + combo * 10). Design alternatives that reward observation without shortening reaction deadlines.",
+    "names": ["elapsed_cs", "is_culprit", "combo"],
+    "domains": [[0, 50, 200, 250], [0, 1], [0, 1, 2, 3]],
+    "cases": [[[50, 0, 2], -40], [[250, 1, 3], 0], [[200, 1, 0], 100], [[50, 1, 2], 120], [[0, 1, 3], 130]],
+    "bounds": [-40, 130]
+  },
+  {
+    "id": "bounded-pity-drop",
+    "brief": "Given pulls_since_rare (0, 8, 9, 10, 19, 20), pity_cap (10, 20), and paid_random (0 or 1), return 1 if guaranteed hard pity triggers else 0. Only paid_random == 1 triggers pity, and only when pulls_since_rare >= pity_cap - 1. Design ethical alternatives that disclose odds and avoid streak pressure.",
+    "names": ["pulls_since_rare", "pity_cap", "paid_random"],
+    "domains": [[0, 8, 9, 10, 19, 20], [10, 20], [0, 1]],
+    "cases": [[[9, 10, 1], 1], [[8, 10, 1], 0], [[19, 20, 1], 1], [[20, 20, 0], 0]],
+    "bounds": [0, 1]
   }
 ]

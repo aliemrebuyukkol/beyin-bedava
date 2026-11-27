@@ -30,22 +30,45 @@ SKIP_DIRS: Set[str] = {
     ".import",
     ".next",
     ".venv",
+    ".swiftpm",
+    ".gradle",
+    ".i18n-work",
+    ".pytest_cache",
     "__pycache__",
     "Binaries",
+    "Builds",
+    "Carthage",
+    "DerivedData",
     "DerivedDataCache",
+    "Docs",
     "Intermediate",
     "Library",
     "Logs",
     "Obj",
+    "Pods",
+    "Store",
     "Temp",
+    "TestResults",
+    "ThirdParty",
     "build",
+    "coverage",
     "dist",
     "node_modules",
     "target",
+    "vendor",
     "venv",
 }
 
-TEXT_EXTENSIONS: Set[str] = {
+SKIP_DIR_SUFFIXES: Tuple[str, ...] = (
+    ".xcodeproj",
+    ".xcworkspace",
+    ".xcassets",
+    ".xcframework",
+    ".framework",
+    ".app",
+)
+
+CODE_EXTENSIONS: Set[str] = {
     ".swift",
     ".dart",
     ".cs",
@@ -64,13 +87,22 @@ TEXT_EXTENSIONS: Set[str] = {
     ".py",
     ".rs",
     ".lua",
-    ".json",
-    ".toml",
-    ".yaml",
-    ".yml",
+    ".luau",
+    ".rpy",
+    ".gml",
     ".html",
-    ".css",
 }
+
+MANIFEST_FILES: Set[str] = {
+    "package.json",
+    "pubspec.yaml",
+    "Cargo.toml",
+    "pyproject.toml",
+    "requirements.txt",
+    "beyin-bedava-config.json",
+}
+
+TEXT_EXTENSIONS: Set[str] = CODE_EXTENSIONS | {".json", ".toml", ".yaml", ".yml", ".css"}
 
 SKIP_FILES: Set[str] = {
     "package-lock.json",
@@ -114,11 +146,16 @@ def _read_text_safe(path: Path, max_bytes: int = 120_000) -> str:
         return ""
 
 
-def _collect_files(root: Path, max_files: int = 1200) -> List[Path]:
+def _collect_files(root: Path, max_files: int = 2500) -> List[Path]:
     collected: List[Path] = []
     for dirpath, dirnames, filenames in os.walk(root):
         directory = Path(dirpath)
-        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not (directory / d).is_symlink())
+        dirnames[:] = sorted(
+            d for d in dirnames
+            if d not in SKIP_DIRS
+            and not d.endswith(SKIP_DIR_SUFFIXES)
+            and not (directory / d).is_symlink()
+        )
         for fname in sorted(filenames):
             path = directory / fname
             if path.is_symlink() or not path.is_file():
@@ -129,46 +166,49 @@ def _collect_files(root: Path, max_files: int = 1200) -> List[Path]:
     return collected
 
 
-def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], List[str]]:
+def detect_all_engines(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], List[str], List[str]]:
     evidence: List[str] = []
     languages: Set[str] = set()
+    detected_engines: List[str] = []
     rel_names = {f.relative_to(root).as_posix() for f in files}
     basenames = {f.name for f in files}
 
+    def add_engine(name: str) -> None:
+        if name not in detected_engines:
+            detected_engines.append(name)
+
     if "project.godot" in basenames:
         evidence.append("Found project.godot")
-        engine = "godot"
+        add_engine("godot")
         if not any(f.suffix == ".cs" for f in files):
             languages.add("gdscript")
-    elif any(r == "ProjectSettings/ProjectVersion.txt" or r.endswith("/ProjectSettings/ProjectVersion.txt")
-             for r in rel_names) or any(f.suffix == ".unity" for f in files):
+    if any(r == "ProjectSettings/ProjectVersion.txt" or r.endswith("/ProjectSettings/ProjectVersion.txt")
+           for r in rel_names) or any(f.suffix == ".unity" for f in files):
         evidence.append("Found Unity ProjectSettings or .unity scene")
-        engine = "unity"
+        add_engine("unity")
         languages.add("csharp")
-    elif any(f.suffix == ".uproject" for f in files):
+    if any(f.suffix == ".uproject" for f in files):
         evidence.append("Found Unreal .uproject file")
-        engine = "unreal"
+        add_engine("unreal")
         languages.add("cpp")
-    elif any(f.suffix == ".yyp" for f in files):
+    if any(f.suffix == ".yyp" for f in files):
         evidence.append("Found a GameMaker .yyp project")
-        engine = "gamemaker"
+        add_engine("gamemaker")
         languages.add("gml")
-    elif any(f.suffix in {".rbxl", ".rbxlx"} for f in files):
+    if any(f.suffix in {".rbxl", ".rbxlx"} for f in files):
         evidence.append("Found a Roblox place file")
-        engine = "roblox"
+        add_engine("roblox")
         languages.add("luau")
-    elif any(f.suffix in {".rpgproject", ".rmmzproject"} for f in files):
+    if any(f.suffix in {".rpgproject", ".rmmzproject"} for f in files):
         evidence.append("Found an RPG Maker MV/MZ project marker")
-        engine = "rpg_maker"
-    elif any(f.suffix == ".rpy" and "game" in f.relative_to(root).parts[:-1] for f in files):
+        add_engine("rpg_maker")
+    if any(f.suffix == ".rpy" and "game" in f.relative_to(root).parts[:-1] for f in files):
         evidence.append("Found a Ren'Py script in a game directory")
-        engine = "renpy"
-    elif "conf.lua" in basenames and any(f.name == "main.lua" for f in files):
+        add_engine("renpy")
+    if "conf.lua" in basenames and any(f.name == "main.lua" for f in files):
         evidence.append("Found LÖVE2D conf.lua + main.lua")
-        engine = "love2d"
+        add_engine("love2d")
         languages.add("lua")
-    else:
-        engine = "non_game"
 
     try:
         package = json.loads(_read_text_safe(root / "package.json") or "{}")
@@ -185,15 +225,13 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
             if isinstance(dependencies, dict):
                 for dependency in sorted(dependencies.keys() & web_engines.keys()):
                     evidence.append(f"package.json declares {dependency} in {field}")
-                    if engine == "non_game":
-                        engine = web_engines[dependency]
+                    add_engine(web_engines[dependency])
 
     cargo_text = _read_text_safe(root / "Cargo.toml").lower()
     for dependency in ("bevy", "macroquad", "ggez"):
         if re.search(rf"(?m)^\s*(?:{dependency}\s*=|\[[^\]\n]*dependencies\.{dependency}\])", cargo_text):
             evidence.append(f"Cargo.toml declares {dependency}")
-            if engine == "non_game":
-                engine = dependency
+            add_engine(dependency)
             languages.add("rust")
 
     for py_manifest in ("pyproject.toml", "requirements.txt"):
@@ -205,30 +243,38 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
                 prefix = r"(?m)(?:^[ 	]*|^[ 	]*dependencies[ 	]*=[ 	]*\[(?:[^\n]*,)?)[ 	]*"
             if re.search(rf"""{prefix}(?:"|')?{package_name}(?:-ce)?(?=["'\s<>=~!;\[\n]|$)""", source):
                 evidence.append(f"{py_manifest} declares {package_name}")
-                if engine == "non_game":
-                    engine = package_name
+                add_engine(package_name)
                 languages.add("python")
 
     # Native game evidence: framework plus gameplay marker (not just a 3D viewer).
-    if engine == "non_game":
-        for f in files:
-            if f.suffix != ".swift":
-                continue
-            source = _read_text_safe(f)
-            if re.search(r"\b(SKScene|SKPhysicsContactDelegate|SKAction)\b", source) and re.search(r"\bimport\s+SpriteKit\b", source):
-                engine = "swift_spritekit"
-            elif re.search(r"\bimport\s+RealityKit\b", source) and re.search(r"\b(gameLoop|GameSystem|GameState|gameOver|PlayerController|gameState)\b", source):
-                engine = "swift_realitykit"
-            elif re.search(r"\bimport\s+SceneKit\b", source) and re.search(r"\b(SCNPhysicsContactDelegate|gameLoop|GameState|gameOver|gameState)\b", source):
-                engine = "swift_scenekit"
-            if engine != "non_game":
-                evidence.append(f"Native game framework and gameplay evidence: {f.relative_to(root)}")
-                break
+    swift_hits: Dict[str, Path] = {}
+    for f in files:
+        if f.suffix != ".swift":
+            continue
+        source = _read_text_safe(f)
+        if ("swift_spritekit" not in swift_hits
+                and re.search(r"\b(SKScene|SKPhysicsContactDelegate|SKAction)\b", source)
+                and re.search(r"\bimport\s+SpriteKit\b", source)):
+            swift_hits["swift_spritekit"] = f
+        if ("swift_realitykit" not in swift_hits
+                and re.search(r"\bimport\s+RealityKit\b", source)
+                and re.search(r"\b(gameLoop|GameSystem|GameState|gameOver|PlayerController|gameState)\b", source)):
+            swift_hits["swift_realitykit"] = f
+        if ("swift_scenekit" not in swift_hits
+                and re.search(r"\bimport\s+SceneKit\b", source)
+                and re.search(r"\b(SCNPhysicsContactDelegate|gameLoop|GameState|gameOver|gameState)\b", source)):
+            swift_hits["swift_scenekit"] = f
+    for sw_engine in ("swift_spritekit", "swift_realitykit", "swift_scenekit"):
+        if sw_engine in swift_hits:
+            add_engine(sw_engine)
+            evidence.append(f"Native game framework and gameplay evidence: {swift_hits[sw_engine].relative_to(root)}")
+
     manifest = root / "pubspec.yaml"
-    if engine == "non_game" and manifest.exists() and re.search(r"(?m)^\s+flame\s*:", _read_text_safe(manifest)):
+    if manifest.exists() and re.search(r"(?m)^\s+flame\s*:", _read_text_safe(manifest)):
         if any(f.suffix == ".dart" and re.search(r"\b(FlameGame|GameWidget)\b", _read_text_safe(f)) for f in files):
-            engine = "flutter_flame"
+            add_engine("flutter_flame")
             evidence.append("Flame dependency and game source")
+
     # Fallback heuristic for custom HTML5/Canvas/React/TS games
     ext_map = {
         ".swift": "swift",
@@ -253,17 +299,23 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
             continue
         if f.suffix in ext_map:
             languages.add(ext_map[f.suffix])
-        if f.suffix in TEXT_EXTENSIONS:
+        if f.suffix in CODE_EXTENSIONS:
             txt = _read_text_safe(f).lower()
             if re.search(r"\b(requestanimationframe|gameloop|game_state|gameover|matchcard|phaser|pixi|new\s+game|oyun\b|oyunu)\b", txt) or "<canvas" in txt:
                 game_loop_hits += 1
 
-    if engine == "non_game" and game_loop_hits >= 2 and ("typescript" in languages or "javascript" in languages):
-        engine = "web_canvas"
+    if not detected_engines and game_loop_hits >= 2 and ("typescript" in languages or "javascript" in languages):
+        add_engine("web_canvas")
         evidence.append(f"Detected {game_loop_hits} files with game loop/state markers")
 
-    is_game = engine != "non_game"
-    return is_game, engine, sorted(languages), evidence
+    primary_engine = detected_engines[0] if detected_engines else "non_game"
+    is_game = primary_engine != "non_game"
+    return is_game, primary_engine, detected_engines, sorted(languages), evidence
+
+
+def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], List[str]]:
+    is_game, engine, _all_engines, languages, evidence = detect_all_engines(root, files)
+    return is_game, engine, languages, evidence
 
 
 def infer_genre_and_systems(root: Path, files: List[Path]) -> Tuple[str, Dict[str, int], Dict[str, List[str]], Dict[str, List[str]]]:
@@ -284,7 +336,9 @@ def infer_genre_and_systems(root: Path, files: List[Path]) -> Tuple[str, Dict[st
                 genre_scores[genre] += 2
 
     for f in files:
-        if f.name in SKIP_FILES or f.suffix not in TEXT_EXTENSIONS:
+        if f.name in SKIP_FILES:
+            continue
+        if f.suffix not in CODE_EXTENSIONS and f.name not in MANIFEST_FILES:
             continue
         rel = f.relative_to(root).as_posix()
         txt = _read_text_safe(f)
@@ -293,10 +347,11 @@ def infer_genre_and_systems(root: Path, files: List[Path]) -> Tuple[str, Dict[st
         if f.name == "beyin-bedava-config.json":
             detected_systems["beyin_bedava_config"].append(rel)
 
-        for genre, regexes in GENRE_REGEXES.items():
-            for rx in regexes:
-                if rx.search(txt) or rx.search(rel):
-                    genre_scores[genre] += 1
+        if f.suffix in CODE_EXTENSIONS:
+            for genre, regexes in GENRE_REGEXES.items():
+                for rx in regexes:
+                    if rx.search(txt) or rx.search(rel):
+                        genre_scores[genre] += 1
 
         if any(tok in lower for tok in ("matchmaking", "sbmm", "eomm", "elo", "dda", "difficulty")):
             detected_systems["matchmaking_or_dda"].append(rel)
@@ -307,9 +362,10 @@ def infer_genre_and_systems(root: Path, files: List[Path]) -> Tuple[str, Dict[st
         if any(tok in lower for tok in ("transparency", "grayscale", "two_loss", "two-loss", "cooling_off", "wellbeing", "beyin_bedava", "beyin-bedava")):
             detected_systems["transparency_or_wellbeing"].append(rel)
 
-        for risk_name, pattern in STATIC_RISK_PATTERNS:
-            if re.search(pattern, txt, flags=re.IGNORECASE):
-                risk_signals.setdefault(risk_name, []).append(rel)
+        if f.suffix in CODE_EXTENSIONS:
+            for risk_name, pattern in STATIC_RISK_PATTERNS:
+                if re.search(pattern, txt, flags=re.IGNORECASE):
+                    risk_signals.setdefault(risk_name, []).append(rel)
 
     best_genre = max(genre_scores.items(), key=lambda kv: kv[1])
     inferred = best_genre[0] if best_genre[1] >= 2 else "other"
@@ -344,11 +400,8 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
             {"id": "post_round_bonus", "surface": "round_summary", "rewardType": "coins", "rewardAmount": 50},
         ],
     }
-    ad_provider = "h5_sdk" if engine.startswith("web_") else "mock"
-    iap_provider = "stripe_web" if engine.startswith("web_") else "mock"
-
     return {
-        "schemaVersion": "3.0.0",
+        "schemaVersion": "3.1.0",
         "gameGenre": genre,
         "transparency": {
             "discloseMatchmaking": True,
@@ -393,7 +446,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
         },
         "adPlacements": {
             "enabled": False,
-            "providerMode": "mock" if ad_provider != "mock" else "mock",
+            "providerMode": "mock",
             "requireConsentBeforeInit": True,
             "removeAdsSkuId": "remove_ads",
             "rewarded": {
@@ -421,7 +474,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
         },
         "purchaseScreens": {
             "enabled": False,
-            "providerMode": "mock" if iap_provider != "mock" else "mock",
+            "providerMode": "mock",
             "showRealMoneyEquivalent": True,
             "requireTwoStepConfirmation": True,
             "preventBundlePriceMismatch": True,
@@ -462,11 +515,20 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
     }
 
 
+def build_minimal_config(genre: str) -> Dict[str, Any]:
+    return {
+        "schemaVersion": "3.1.0",
+        "gameGenre": genre,
+        "enabledModules": [],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Detect game engine/genre and generate Beyin-Bedava plan.")
     parser.add_argument("workspace", type=Path, help="Path to target workspace directory.")
     parser.add_argument("--format", choices=["json", "markdown"], default="json")
     parser.add_argument("--emit-config", type=Path, help="Optional path to write recommended beyin-bedava-config.json.")
+    parser.add_argument("--minimal", action="store_true", help="Emit modular minimal config with no pre-enabled subsystems.")
     args = parser.parse_args()
 
     root = args.workspace.resolve()
@@ -475,9 +537,9 @@ def main() -> int:
         return 1
 
     files = _collect_files(root)
-    is_game, engine, languages, evidence = detect_engine(root, files)
+    is_game, engine, all_engines, languages, evidence = detect_all_engines(root, files)
     genre, genre_scores, detected_systems, risk_signals = infer_genre_and_systems(root, files)
-    config = build_recommended_config(genre, engine)
+    config = build_minimal_config(genre) if args.minimal else build_recommended_config(genre, engine)
 
     if args.emit_config:
         if not is_game:
@@ -494,6 +556,7 @@ def main() -> int:
         "workspace": str(root),
         "is_game_project": is_game,
         "engine": engine,
+        "detected_engines": all_engines,
         "languages": languages,
         "evidence": evidence,
         "inferred_genre": genre,
@@ -513,6 +576,8 @@ def main() -> int:
     else:
         print(f"# Beyin-Bedava Project Scan (`{root.name}`)")
         print(f"- **Game Project:** `{is_game}` | **Engine:** `{engine}` | **Genre:** `{genre}`")
+        if len(all_engines) > 1:
+            print(f"- **All Detected Engines:** {', '.join(all_engines)}")
         print(f"- **Languages:** {', '.join(languages) or 'none'}")
         print(f"- **Evidence:** {'; '.join(evidence) or 'None'}")
         print(f"- **Static Risk Signals:** {', '.join(risk_signals.keys()) or 'None detected'}")

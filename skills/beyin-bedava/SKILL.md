@@ -3,7 +3,7 @@ name: beyin-bedava
 description: Design, implement, audit and improve digital games with game DNA, creative mechanics, player motivation, game feel, progression, engine-specific architecture, fair adaptive difficulty, optional ethical monetization, accessibility and evidence-based verification. Activate for explicit game work or confirmed game projects; never expand the requested scope automatically.
 ---
 
-# Beyin-Bedava 3.0.0
+# Beyin-Bedava 3.1.0
 
 ## Non-negotiable rules
 - Start from the player experience, not retention or monetization. Do not rig outcomes, exploit vulnerabilities, or optimize for compulsive play. Never change competitive outcomes or physics based on spending, churn, or ad propensity.

@@ -91,6 +91,41 @@ class LedgerTests(unittest.TestCase):
             with self.subTest(path=path), self.assertRaises(ValueError):
                 task_ledger.file_path(path)
 
+    def test_custom_owners_reopen_attempts_and_git_worktree(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = pathlib.Path(scratch).resolve()
+            db_path = root / "ledger.db"
+            ledger = task_ledger.Ledger(db_path)
+            self.addCleanup(ledger.db.close)
+            plan = {
+                "goal": "Custom owner slice",
+                "baseline": "abc123",
+                "owners": ["gameplay-agent", "qa-agent"],
+                "tasks": [
+                    {"id": "slice", "owner": "gameplay-agent", "acceptance": "ship it",
+                     "files": ["src/game.py"], "max_attempts": 1},
+                ],
+            }
+            ledger.init(plan)
+            first = ledger.claim("gameplay-agent", 60)
+            ledger.update("slice", first["token"], "fail", "first failure")
+            self.assertIsNone(ledger.claim("gameplay-agent", 60))
+            ledger.reopen("slice", "retry with budget", extra_attempts=3)
+            reopened = ledger.claim("gameplay-agent", 60)
+            self.assertEqual(reopened["task"], "slice")
+
+            repo = root / "repo"
+            repo.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            (repo / "src").mkdir()
+            (repo / "src/game.py").write_text("print('ok')\n", encoding="utf-8")
+            worktree = ledger.check_git_worktree("slice", reopened["token"], repo)
+            self.assertEqual(worktree, {"owned": ["src/game.py"], "changed": ["src/game.py"]})
+
+            (repo / "other.py").write_text("print('unowned')\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unowned files: other.py"):
+                ledger.check_git_worktree("slice", reopened["token"], repo)
+
 
 class GameplayTests(unittest.TestCase):
     def test_layout_balance_and_mechanic_coverage(self):
@@ -111,6 +146,49 @@ class GameplayTests(unittest.TestCase):
                          {"unwinnable", "difficulty_jump", "repeated_layout", "unused_mechanic",
                           "low_mechanic_variety"})
         self.assertIsNone(audit_gameplay.reachable(["S#G"], (0, 0), True))
+
+    def test_graph_and_timing_gameplay_audit(self):
+        rules = {"verb": "tap", "feedback": "flash", "failure": "miss", "recovery": "retry"}
+        payload = {
+            "mechanics": {"observe": rules, "tap": rules},
+            "levels": [
+                {
+                    "id": "g1",
+                    "mechanics": ["observe"],
+                    "difficulty": 1,
+                    "requires_key": True,
+                    "move_budget": 3,
+                    "graph": {
+                        "nodes": ["start", "clue", "goal"],
+                        "start": "start",
+                        "key_node": "clue",
+                        "goal": "goal",
+                        "edges": [["start", "clue"], ["clue", "goal"]],
+                    },
+                    "timing": {"reaction_window_ms": 2000, "min_gap_ms": 800, "concurrent_max": 2},
+                },
+                {
+                    "id": "g2",
+                    "mechanics": ["observe", "tap"],
+                    "difficulty": 2,
+                    "timing": {"reaction_window_ms": 1200, "min_gap_ms": 500, "concurrent_max": 3},
+                },
+            ],
+            "policy": {
+                "max_difficulty_step": 2,
+                "min_mechanic_sets": 2,
+                "min_reaction_window_ms": 1500,
+                "min_event_gap_ms": 600,
+                "max_concurrent_events": 2,
+            },
+        }
+        report = audit_gameplay.audit(payload)
+        self.assertEqual(report["levels"][0]["shortest_solution_moves"], 2)
+        self.assertIsNone(report["levels"][1]["shortest_solution_moves"])
+        timing_issues = [item for item in report["issues"] if item["check"] == "unfair_timing"]
+        self.assertEqual(len(timing_issues), 3)
+        self.assertEqual({item["reason"] for item in timing_issues},
+                         {"reaction_window_below_minimum", "event_gap_below_minimum", "concurrent_events_exceed_max"})
 
     def test_experience_provenance_and_missing(self):
         criterion = {"threshold": 0.75, "min_samples": 8, "method": "coded after test", "population": "novice"}
@@ -187,7 +265,7 @@ class InstallationAndBenchmarkTests(unittest.TestCase):
     def test_host_targets_and_probe(self):
         for host, expected in (("codex", ".agents"), ("claude-code", ".claude"), ("antigravity", ".agents")):
             with self.subTest(host=host), tempfile.TemporaryDirectory() as scratch:
-                project = pathlib.Path(scratch)
+                project = pathlib.Path(scratch).resolve()
                 args = [sys.executable, str(SCRIPTS / "install_skill.py"), host]
                 options = ["--project", str(project)]
                 installed = subprocess.run(args + ["install"] + options, capture_output=True, check=True)
@@ -204,9 +282,31 @@ class InstallationAndBenchmarkTests(unittest.TestCase):
                 self.assertFalse(install_skill.matching(dest))
                 with self.assertRaises(ValueError):
                     install_skill.install(dest)
+                subprocess.run(args + ["upgrade"] + options, capture_output=True, check=True)
+                self.assertTrue(install_skill.matching(dest))
+
+    def test_global_plugin_install_check_and_upgrade(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            plugin_dir = pathlib.Path(scratch).resolve() / "beyin-bedava"
+            plugin_dir.mkdir()
+            (plugin_dir / ".git").mkdir()
+            (plugin_dir / ".git/HEAD").write_text("ref: refs/heads/main\n")
+            base = [sys.executable, str(SCRIPTS / "install_skill.py"), "antigravity"]
+            opts = ["--global-plugin", "--plugin-dir", str(plugin_dir)]
+            subprocess.run(base + ["install"] + opts, capture_output=True, check=True)
+            subprocess.run(base + ["check"] + opts, capture_output=True, check=True)
+            (plugin_dir / "plugin.json").write_text('{"version":"0.0.0"}')
+            (plugin_dir / "skills/beyin-bedava/stale.md").write_text("stale")
+            failed_check = subprocess.run(base + ["check"] + opts, capture_output=True)
+            self.assertEqual(failed_check.returncode, 2)
+            subprocess.run(base + ["upgrade"] + opts, capture_output=True, check=True)
+            subprocess.run(base + ["check"] + opts, capture_output=True, check=True)
+            self.assertFalse((plugin_dir / "skills/beyin-bedava/stale.md").exists())
+            self.assertTrue((plugin_dir / ".git/HEAD").is_file())
 
     def test_benchmark_executes_bounded_rules_and_rejects_calls(self):
-        task = json.loads((ROOT / "benchmarks/tasks.json").read_text())[0]
+        tasks = json.loads((ROOT / "benchmarks/tasks.json").read_text())
+        task = tasks[0]
         answer = {"expression": "0 if action == 2 else charge if opened else min(3, charge + 1)"
                                 " if action == 0 else 0 if charge == 3 else charge"}
         self.assertEqual(benchmark.grade(json.dumps(answer), task)["task_completion"], 1)
@@ -214,6 +314,20 @@ class InstallationAndBenchmarkTests(unittest.TestCase):
         self.assertEqual(benchmark.grade(json.dumps(answer), task)["error_rate"], 1)
         answer["expression"] = "1 // charge"
         self.assertGreater(benchmark.grade(json.dumps(answer), task)["error_rate"], 0)
+
+        solutions = {
+            "pulse-gate": "0 if action == 2 else charge if opened else min(3, charge + 1) if action == 0 else 0 if charge == 3 else charge",
+            "optional-assist": "min(6, (failures - 1) * 2) if opt_in == 1 and competitive == 0 and failures >= 2 else 0",
+            "practice-medals": "0 if practice == 1 else min(7, max(0, successes * 2 - hints))",
+            "fair-window-scoring": "-40 if is_culprit == 0 else 0 if elapsed_cs > 200 else min(130, 100 + combo * 10)",
+            "bounded-pity-drop": "1 if paid_random == 1 and pulls_since_rare >= pity_cap - 1 else 0",
+        }
+        self.assertEqual(len(tasks), len(solutions))
+        for item in tasks:
+            with self.subTest(task=item["id"]):
+                result = benchmark.grade(json.dumps({"expression": solutions[item["id"]]}), item)
+                self.assertEqual(result["task_completion"], 1.0)
+                self.assertEqual(result["error_rate"], 0.0)
 
     def test_benchmark_schedule_balances_which_condition_runs_first(self):
         tasks = [{"id": "a"}, {"id": "b"}]
@@ -224,12 +338,14 @@ class InstallationAndBenchmarkTests(unittest.TestCase):
 
     def test_benchmark_reports_provider_failure_separately(self):
         failed = {"status": "provider_error", "seconds": 1}
-        complete = {"status": "completed", "seconds": 3, "task_completion": 1}
-        summary = benchmark.aggregate([{"on": failed, "off": complete}, {"on": complete, "off": complete}])
+        complete = {"status": "completed", "seconds": 3, "task_completion": 1, "total_tokens": 100}
+        on_complete = {"status": "completed", "seconds": 4, "task_completion": 1, "total_tokens": 400}
+        summary = benchmark.aggregate([{"on": failed, "off": complete}, {"on": on_complete, "off": complete}])
         self.assertEqual(summary["completed_pairs"], 1)
         self.assertEqual(summary["provider_error_rate"], {"on": 0.5, "off": 0})
         self.assertEqual(summary["metrics"]["seconds"]["off_mean"], 3)
         self.assertIsNone(summary["metrics"]["input_tokens"])
+        self.assertEqual(summary["token_overhead_ratio"], 4.0)
 
 
 if __name__ == "__main__":

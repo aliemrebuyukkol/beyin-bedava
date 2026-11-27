@@ -184,7 +184,15 @@ def aggregate(pairs):
             metrics[metric] = {"paired_n": len(matched), "off_mean": statistics.mean(off),
                                "on_mean": statistics.mean(on),
                                "paired_delta_on_minus_off": statistics.mean(b - a for a, b in matched)}
+    ratios = [
+        pair["on"]["total_tokens"] / pair["off"]["total_tokens"]
+        for pair in complete
+        if type(pair["on"].get("total_tokens")) in (int, float)
+        and type(pair["off"].get("total_tokens")) in (int, float)
+        and pair["off"]["total_tokens"] > 0
+    ]
     return {"completed_pairs": len(complete), "metrics": metrics,
+            "token_overhead_ratio": statistics.mean(ratios) if ratios else None,
             "provider_error_rate": {condition: statistics.mean(p[condition]["status"] == "provider_error"
                                                                for p in pairs) for condition in ("off", "on")}}
 

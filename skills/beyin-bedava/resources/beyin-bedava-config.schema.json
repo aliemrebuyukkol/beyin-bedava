@@ -6,20 +6,64 @@
   "type": "object",
   "required": [
     "schemaVersion",
-    "gameGenre",
-    "transparency",
-    "matchmaking",
-    "dda",
-    "economy",
-    "adPlacements",
-    "purchaseScreens",
-    "wellbeingProtocol"
+    "gameGenre"
   ],
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "transparency"}}}
+      },
+      "then": {"required": ["transparency"]}
+    },
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "matchmaking"}}}
+      },
+      "then": {"required": ["matchmaking"]}
+    },
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "dda"}}}
+      },
+      "then": {"required": ["dda"]}
+    },
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "economy"}}}
+      },
+      "then": {"required": ["economy"]}
+    },
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "adPlacements"}}}
+      },
+      "then": {"required": ["adPlacements"]}
+    },
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "purchaseScreens"}}}
+      },
+      "then": {"required": ["purchaseScreens"]}
+    },
+    {
+      "if": {
+        "required": ["enabledModules"],
+        "properties": {"enabledModules": {"contains": {"const": "wellbeingProtocol"}}}
+      },
+      "then": {"required": ["wellbeingProtocol"]}
+    }
+  ],
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "default": "3.0.0"
+      "default": "3.1.0"
     },
     "gameGenre": {
       "type": "string",
@@ -33,6 +77,23 @@
         "other"
       ],
       "default": "other"
+    },
+    "enabledModules": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "transparency",
+          "matchmaking",
+          "dda",
+          "economy",
+          "adPlacements",
+          "purchaseScreens",
+          "wellbeingProtocol"
+        ]
+      },
+      "default": []
     },
     "transparency": {
       "type": "object",

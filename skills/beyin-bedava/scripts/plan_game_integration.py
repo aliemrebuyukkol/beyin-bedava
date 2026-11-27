@@ -64,10 +64,44 @@ def validate(kind, document, schema):
         raise ValueError(f"{kind} at {location} violates {error.validator}")
 
 
+def validate_comparator(spec):
+    if not isinstance(spec, dict) or not spec:
+        raise ValueError("comparator must be a nonempty object")
+    allowed = {"lte", "lt", "gte", "gt", "approx", "tol", "between"}
+    unknown = set(spec) - allowed
+    if unknown:
+        raise ValueError(f"unsupported comparator keys: {', '.join(sorted(unknown))}")
+    if "between" in spec and len(spec) > 1:
+        raise ValueError("between comparator cannot be combined with other operators")
+    if "tol" in spec and "approx" not in spec:
+        raise ValueError("tol requires approx comparator")
+    if "approx" in spec and (set(spec) & {"lt", "lte", "gt", "gte"}):
+        raise ValueError("approx cannot be combined with range operators")
+    for key, val in spec.items():
+        if key == "between":
+            if (not isinstance(val, list) or len(val) != 2
+                    or any(type(item) not in (int, float) or not math.isfinite(item) for item in val)
+                    or val[0] > val[1]):
+                raise ValueError("between requires two finite numbers [min, max] with min <= max")
+        else:
+            if type(val) not in (int, float) or not math.isfinite(val):
+                raise ValueError(f"comparator {key} requires a finite number")
+            if key == "tol" and val < 0:
+                raise ValueError("comparator tol must be non-negative")
+
+
 def index_checks(checks):
-    result = {check["id"]: check for check in checks}
-    if len(result) != len(checks):
-        raise ValueError("duplicate check ID")
+    result = {}
+    for check in checks:
+        cid = check["id"]
+        if cid in result:
+            raise ValueError("duplicate check ID")
+        expect = check.get("expect")
+        if isinstance(expect, dict):
+            for val in expect.values():
+                if isinstance(val, dict):
+                    validate_comparator(val)
+        result[cid] = check
     return result
 
 
@@ -181,6 +215,30 @@ def same_value(expected, observed):
     return expected == observed
 
 
+def matches_expectation(expected, observed):
+    if isinstance(expected, dict):
+        if type(observed) not in (int, float) or not math.isfinite(observed):
+            return False
+        if "lte" in expected and not (observed <= expected["lte"]):
+            return False
+        if "lt" in expected and not (observed < expected["lt"]):
+            return False
+        if "gte" in expected and not (observed >= expected["gte"]):
+            return False
+        if "gt" in expected and not (observed > expected["gt"]):
+            return False
+        if "between" in expected:
+            low, high = expected["between"]
+            if not (low <= observed <= high):
+                return False
+        if "approx" in expected:
+            tol = expected.get("tol", 1e-9)
+            if abs(observed - expected["approx"]) > tol:
+                return False
+        return True
+    return same_value(expected, observed)
+
+
 def verify(plan, evidence, revision, schema):
     validate("evidence", evidence, schema)
     if (not isinstance(plan, dict) or type(plan.get("version")) is not int or plan["version"] != 1
@@ -204,7 +262,7 @@ def verify(plan, evidence, revision, schema):
         expected, observed = check["expect"], record["observed"]
         missing = sorted(expected.keys() - observed.keys())
         mismatches = sorted(name for name in expected.keys() & observed.keys()
-                            if not same_value(expected[name], observed[name]))
+                            if not matches_expectation(expected[name], observed[name]))
         status = "failed" if mismatches else "missing" if missing else (
             "passed" if evidence["source"] == "runtime" else "synthetic_only")
         outcomes[key] = {"status": status, "missing": missing, "mismatches": mismatches,

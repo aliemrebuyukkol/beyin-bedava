@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sqlite3
+import subprocess
 import sys
 import time
 import uuid
@@ -12,6 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
 OWNERS = {"beyin-bedava", "tasarim-vergisi"}
+OWNER_RE = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
 
 
 def file_path(value):
@@ -30,6 +33,7 @@ class Ledger:
         self.db.execute("PRAGMA foreign_keys = ON")
         self.db.executescript("""
             CREATE TABLE IF NOT EXISTS plan (goal TEXT NOT NULL, baseline TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS owners (id TEXT PRIMARY KEY);
             CREATE TABLE IF NOT EXISTS tasks (
                 id TEXT PRIMARY KEY, owner TEXT NOT NULL, acceptance TEXT NOT NULL,
                 state TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0,
@@ -55,12 +59,26 @@ class Ledger:
             self.db.execute("BEGIN IMMEDIATE")
             yield
 
+    def allowed_owners(self):
+        rows = {row[0] for row in self.db.execute("SELECT id FROM owners")}
+        return rows if rows else set(OWNERS)
+
     def init(self, plan):
         if (not isinstance(plan, dict) or not isinstance(plan.get("tasks"), list)
                 or not plan["tasks"]):
             raise ValueError("a plan object with a nonempty tasks array is required")
         if not all(isinstance(plan.get(key), str) and plan[key].strip() for key in ("goal", "baseline")):
             raise ValueError("goal and baseline revision are required")
+        plan_owners = plan.get("owners")
+        if plan_owners is None:
+            owners = sorted(OWNERS)
+        else:
+            if (not isinstance(plan_owners, list) or not plan_owners
+                    or not all(isinstance(item, str) and OWNER_RE.fullmatch(item) for item in plan_owners)
+                    or len(set(plan_owners)) != len(plan_owners)):
+                raise ValueError("owners must be a nonempty list of unique identifiers")
+            owners = list(plan_owners)
+        owner_set = set(owners)
         tasks = {}
         for task in plan["tasks"]:
             if not isinstance(task, dict) or not isinstance(task.get("id"), str) or not task["id"].strip():
@@ -84,9 +102,10 @@ class Ledger:
             if self.db.execute("SELECT 1 FROM plan").fetchone():
                 raise ValueError("ledger already initialized")
             self.db.execute("INSERT INTO plan VALUES (?, ?)", (plan["goal"], plan["baseline"]))
+            self.db.executemany("INSERT INTO owners VALUES (?)", ((owner,) for owner in owners))
             for task_id, task in tasks.items():
                 attempts = task.get("max_attempts", 3)
-                if (task.get("owner") not in OWNERS or not isinstance(task.get("acceptance"), str)
+                if (task.get("owner") not in owner_set or not isinstance(task.get("acceptance"), str)
                         or not task["acceptance"].strip() or type(attempts) is not int or not 1 <= attempts <= 1000):
                     raise ValueError(f"invalid owner, acceptance or attempt budget for {task_id}")
                 self.db.execute("INSERT INTO tasks (id, owner, acceptance, max_attempts) VALUES (?, ?, ?, ?)",
@@ -111,7 +130,7 @@ class Ledger:
             self.log(task["id"], "lease-expired", state)
 
     def claim(self, owner, seconds, task_id=None):
-        if owner not in OWNERS or not 1 <= seconds <= 86400:
+        if owner not in self.allowed_owners() or not 1 <= seconds <= 86400:
             raise ValueError("invalid owner or lease")
         with self.transaction():
             self.recover()
@@ -160,18 +179,20 @@ class Ledger:
                 raise ValueError("unknown update")
             self.log(task_id, action, detail)
 
-    def reopen(self, task_id, reason):
+    def reopen(self, task_id, reason, extra_attempts=1):
+        if type(extra_attempts) is not int or not 1 <= extra_attempts <= 100:
+            raise ValueError("extra_attempts must be an integer between 1 and 100")
         if not reason.strip():
             raise ValueError("recovery reason required")
         with self.transaction():
-            changed = self.db.execute("""UPDATE tasks SET state='pending', max_attempts=attempts+1
-                                         WHERE id=? AND state='blocked'""", (task_id,)).rowcount
+            changed = self.db.execute("""UPDATE tasks SET state='pending', max_attempts=attempts+?
+                                         WHERE id=? AND state='blocked'""", (extra_attempts, task_id)).rowcount
             if not changed:
                 raise ValueError("only blocked tasks can be reopened")
             self.log(task_id, "reopen", reason)
 
     def handoff(self, task_id, owner, reason):
-        if owner not in OWNERS or not reason.strip():
+        if owner not in self.allowed_owners() or not reason.strip():
             raise ValueError("valid owner and handoff reason required")
         with self.transaction():
             changed = self.db.execute("""UPDATE tasks SET owner=? WHERE id=? AND state IN
@@ -187,6 +208,36 @@ class Ledger:
         if denied:
             raise ValueError("unowned files: " + ", ".join(sorted(denied)))
         return sorted(owned)
+
+    def check_git_worktree(self, task_id, token, repo_root):
+        self.active(task_id, token)
+        proc = subprocess.run(
+            ["git", "-C", str(repo_root), "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            capture_output=True, check=False,
+        )
+        if proc.returncode != 0:
+            raise ValueError(f"git status failed for {repo_root}")
+        entries = proc.stdout.split(b"\x00")
+        changed = []
+        idx = 0
+        while idx < len(entries):
+            entry = entries[idx]
+            idx += 1
+            if not entry:
+                continue
+            if len(entry) < 4 or entry[2:3] != b" ":
+                raise ValueError("unexpected git status entry")
+            changed.append(entry[3:].decode("utf-8", errors="strict"))
+            if entry[0:1] in (b"R", b"C") and idx < len(entries):
+                orig = entries[idx]
+                idx += 1
+                if orig:
+                    changed.append(orig.decode("utf-8", errors="strict"))
+        if changed:
+            owned = self.check_files(task_id, token, changed)
+        else:
+            owned = sorted(row[0] for row in self.db.execute("SELECT path FROM files WHERE task=?", (task_id,)))
+        return {"owned": owned, "changed": sorted(set(changed))}
 
     def status(self):
         with self.transaction():
@@ -213,7 +264,7 @@ def main():
     commands.add_parser("init").add_argument("plan", type=Path)
     commands.add_parser("status")
     claim = commands.add_parser("claim")
-    claim.add_argument("owner", choices=sorted(OWNERS))
+    claim.add_argument("owner")
     claim.add_argument("--task")
     claim.add_argument("--seconds", type=int, default=900)
     for name in ("checkpoint", "finish", "fail", "check-files"):
@@ -221,7 +272,8 @@ def main():
         command.add_argument("task")
         command.add_argument("token")
         if name == "check-files":
-            command.add_argument("paths", nargs="+")
+            command.add_argument("paths", nargs="*")
+            command.add_argument("--git-root", type=Path)
         else:
             command.add_argument("detail")
         if name == "checkpoint":
@@ -230,8 +282,10 @@ def main():
         command = commands.add_parser(name)
         command.add_argument("task")
         if name == "handoff":
-            command.add_argument("owner", choices=sorted(OWNERS))
+            command.add_argument("owner")
         command.add_argument("reason")
+        if name == "reopen":
+            command.add_argument("--attempts", type=int, default=1)
     args = parser.parse_args()
     try:
         ledger = Ledger(args.db)
@@ -243,11 +297,18 @@ def main():
         elif args.command == "claim":
             result = ledger.claim(args.owner, args.seconds, args.task)
         elif args.command == "reopen":
-            ledger.reopen(args.task, args.reason)
+            ledger.reopen(args.task, args.reason, args.attempts)
         elif args.command == "handoff":
             ledger.handoff(args.task, args.owner, args.reason)
         elif args.command == "check-files":
-            result = {"owned": ledger.check_files(args.task, args.token, args.paths)}
+            if not args.paths and not args.git_root:
+                raise ValueError("supply file paths or --git-root")
+            if args.git_root:
+                result = ledger.check_git_worktree(args.task, args.token, args.git_root.resolve())
+                if args.paths:
+                    result["owned"] = ledger.check_files(args.task, args.token, args.paths)
+            else:
+                result = {"owned": ledger.check_files(args.task, args.token, args.paths)}
         else:
             ledger.update(args.task, args.token, args.command, args.detail, getattr(args, "seconds", 900))
         print(json.dumps(result, indent=2))

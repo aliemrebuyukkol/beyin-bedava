@@ -68,3 +68,7 @@ The full Python suite has 34 tests after the integration workflow work. A custom
 A temporary checkout of Yankı Rotası at `f6a015b` ran its actual Godot smoke test and campaign audit. Its project-specific contract observed six reachable levels, a longest shortest path of 41 actions, four mechanic sets and zero exact or mirrored layouts. The generic verifier matched the selected observations at that revision.
 
 The Qwen measurements above use the benchmark context hashed in those run artifacts. See the [integration walkthrough](../skills/beyin-bedava/orchestration/integration.md) for current commands.
+
+## 3.1.0 additions
+
+`benchmarks/tasks.json` now includes two additional deterministic tasks (`fair-window-scoring` and `bounded-pity-drop`), and `benchmarks/run.py` reports `token_overhead_ratio` in `aggregate()`. Deterministic grader unit tests pass against reference expressions for all five tasks; live model runs for the two new tasks remain pending.

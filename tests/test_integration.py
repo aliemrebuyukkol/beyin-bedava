@@ -187,6 +187,50 @@ class IntegrationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate check"):
                 self.plan(workspace)
 
+    def test_threshold_comparators_and_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            manifest = {
+                "version": 1,
+                "game": {"name": "Latency Bench", "engine": "terminal-lite"},
+                "checks": [
+                    {
+                        "id": "frame_budget",
+                        "focus": "build",
+                        "description": "Verify p95 latency, drop rate, fps window, and calibrated ratio.",
+                        "expect": {
+                            "p95_ms": {"lte": 33.3},
+                            "missed_rate": {"lt": 0.05},
+                            "fps": {"between": [58, 62]},
+                            "scale": {"approx": 1.0, "tol": 0.02},
+                            "stable": True,
+                        },
+                    }
+                ],
+            }
+            (workspace / integration.MANIFEST_NAME).write_text(json.dumps(manifest), encoding="utf-8")
+            plan = self.plan(workspace)
+            passing = {
+                "version": 1, "plan_id": plan["plan_id"], "revision": "r1", "source": "runtime",
+                "checks": [{"id": "frame_budget", "artifact": "trace.json", "observed": {
+                    "p95_ms": 33.3, "missed_rate": 0.04, "fps": 60, "scale": 1.01, "stable": True,
+                }}],
+            }
+            self.assertEqual(integration.verify(plan, passing, "r1", self.schema)["status"], "passed")
+
+            boundary_fail = copy.deepcopy(passing)
+            boundary_fail["checks"][0]["observed"]["missed_rate"] = 0.05
+            boundary_fail["checks"][0]["observed"]["fps"] = True
+            failed = integration.verify(plan, boundary_fail, "r1", self.schema)
+            self.assertEqual(failed["status"], "failed")
+            self.assertEqual(failed["checks"]["frame_budget"]["mismatches"], ["fps", "missed_rate"])
+
+            bad_manifest = copy.deepcopy(manifest)
+            bad_manifest["checks"][0]["expect"]["fps"] = {"between": [5, 2]}
+            (workspace / integration.MANIFEST_NAME).write_text(json.dumps(bad_manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "min <= max"):
+                self.plan(workspace)
+
 
 if __name__ == "__main__":
     unittest.main()

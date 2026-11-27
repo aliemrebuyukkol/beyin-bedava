@@ -12,6 +12,34 @@
       "propertyNames": {"$ref": "#/$defs/key"},
       "additionalProperties": {"$ref": "#/$defs/value"}
     },
+    "comparator": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 2,
+      "dependentRequired": {"tol": ["approx"]},
+      "properties": {
+        "lte": {"type": "number"},
+        "lt": {"type": "number"},
+        "gte": {"type": "number"},
+        "gt": {"type": "number"},
+        "approx": {"type": "number"},
+        "tol": {"type": "number", "minimum": 0},
+        "between": {
+          "type": "array",
+          "prefixItems": [{"type": "number"}, {"type": "number"}],
+          "minItems": 2,
+          "maxItems": 2,
+          "items": false
+        }
+      }
+    },
+    "expectation": {"oneOf": [{"$ref": "#/$defs/value"}, {"$ref": "#/$defs/comparator"}]},
+    "expectations": {
+      "type": "object", "minProperties": 1, "maxProperties": 32,
+      "propertyNames": {"$ref": "#/$defs/key"},
+      "additionalProperties": {"$ref": "#/$defs/expectation"}
+    },
     "manifest": {
       "type": "object", "additionalProperties": false,
       "required": ["version", "game", "checks"],
@@ -33,7 +61,7 @@
             "required": ["id", "focus", "description", "expect"],
             "properties": {
               "id": {"$ref": "#/$defs/key"}, "focus": {"$ref": "#/$defs/focus"},
-              "description": {"$ref": "#/$defs/note"}, "expect": {"$ref": "#/$defs/values"}
+              "description": {"$ref": "#/$defs/note"}, "expect": {"$ref": "#/$defs/expectations"}
             }
           }
         }

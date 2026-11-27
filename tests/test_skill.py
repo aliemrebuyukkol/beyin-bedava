@@ -26,8 +26,12 @@ class SkillTests(unittest.TestCase):
         self.assertEqual(config["schemaVersion"], release)
         self.assertEqual(schema["properties"]["schemaVersion"]["default"], release)
         self.assertEqual(installer.VERSION, release)
-        for version in ("2.0.0", "2.1.0"):
+        for version in ("2.0.0", "2.1.0", "3.0.0"):
             jsonschema.validate({**config, "schemaVersion": version}, schema)
+        minimal = detector.build_minimal_config("puzzle_casual")
+        jsonschema.validate(minimal, schema)
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate({**minimal, "enabledModules": ["dda"]}, schema)
         self.assertEqual(config["matchmaking"]["mode"], "disabled")
         self.assertFalse(config["dda"]["enabled"])
         self.assertFalse(config["adPlacements"]["enabled"])
@@ -46,6 +50,38 @@ class SkillTests(unittest.TestCase):
             self.assertEqual(detector.detect_engine(root, [file])[1], "swift_spritekit")
             file.write_text("import RealityKit\nclass GameState {}")
             self.assertEqual(detector.detect_engine(root, [file])[1], "swift_realitykit")
+
+    def test_multi_engine_skip_dirs_and_minimal_emit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            (root / "Game2D.swift").write_text("import SpriteKit\nclass MainScene: SKScene {}")
+            (root / "Proto3D.swift").write_text("import RealityKit\nclass GameState {}")
+            (root / "TestResults").mkdir()
+            (root / "TestResults/report.json").write_text('{"store": true, "gacha": 1}')
+            (root / "App.xcodeproj").mkdir()
+            (root / "App.xcodeproj/project.pbxproj").write_text("matchmaking")
+            (root / "Localization").mkdir()
+            (root / "Localization/en.json").write_text('{"deck": "card", "mana_cost": 1}')
+            files = detector._collect_files(root)
+            is_game, primary, all_engines, langs, _ = detector.detect_all_engines(root, files)
+            self.assertTrue(is_game)
+            self.assertEqual(primary, "swift_spritekit")
+            self.assertEqual(all_engines, ["swift_spritekit", "swift_realitykit"])
+            self.assertEqual(langs, ["swift"])
+            genre, _scores, systems, risks = detector.infer_genre_and_systems(root, files)
+            self.assertEqual(genre, "other")
+            self.assertEqual(systems["economy_or_iap"], [])
+            self.assertEqual(risks, {})
+            out = root / "min-config.json"
+            run = subprocess.run(
+                [sys.executable, str(SCRIPTS / "detect_game_project.py"), str(root),
+                 "--emit-config", str(out), "--minimal"],
+                capture_output=True, check=True,
+            )
+            payload = json.loads(run.stdout)
+            self.assertEqual(payload["detected_engines"], ["swift_spritekit", "swift_realitykit"])
+            emitted = json.loads(out.read_text())
+            self.assertEqual(emitted, {"schemaVersion": "3.1.0", "gameGenre": "other", "enabledModules": []})
 
     def test_flame(self):
         with tempfile.TemporaryDirectory() as tmp:
