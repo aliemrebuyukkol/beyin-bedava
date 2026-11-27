@@ -1,0 +1,140 @@
+{
+  "model": "qwen2.5-coder-1.5b-instruct-q4-k-m",
+  "conditions": "counterbalanced_skill_context",
+  "acceptance_cases": 144,
+  "summary": {
+    "completed_pairs": 2,
+    "metrics": {
+      "creativity_proxy": {
+        "paired_n": 2,
+        "off_mean": 0.0,
+        "on_mean": 0.5,
+        "paired_delta_on_minus_off": 0.5
+      },
+      "code_quality": {
+        "paired_n": 2,
+        "off_mean": 0.6666666666666666,
+        "on_mean": 0.6666666666666666,
+        "paired_delta_on_minus_off": 0.0
+      },
+      "task_completion": {
+        "paired_n": 2,
+        "off_mean": 0.0,
+        "on_mean": 0.0,
+        "paired_delta_on_minus_off": 0.0
+      },
+      "error_rate": {
+        "paired_n": 2,
+        "off_mean": 1.0,
+        "on_mean": 1.0,
+        "paired_delta_on_minus_off": 0.0
+      },
+      "input_tokens": {
+        "paired_n": 2,
+        "off_mean": 268,
+        "on_mean": 2041,
+        "paired_delta_on_minus_off": 1773
+      },
+      "cached_input_tokens": {
+        "paired_n": 2,
+        "off_mean": 133.5,
+        "on_mean": 1151,
+        "paired_delta_on_minus_off": 1017.5
+      },
+      "output_tokens": {
+        "paired_n": 2,
+        "off_mean": 246.5,
+        "on_mean": 240.5,
+        "paired_delta_on_minus_off": -6
+      },
+      "total_tokens": {
+        "paired_n": 2,
+        "off_mean": 514.5,
+        "on_mean": 2281.5,
+        "paired_delta_on_minus_off": 1767
+      },
+      "seconds": {
+        "paired_n": 2,
+        "off_mean": 10.97495,
+        "on_mean": 22.17925,
+        "paired_delta_on_minus_off": 11.2043
+      }
+    },
+    "provider_error_rate": {
+      "off": 0,
+      "on": 0
+    }
+  },
+  "pairs": [
+    {
+      "task": "yanki-gate",
+      "repeat": 1,
+      "order": [
+        "off",
+        "on"
+      ],
+      "seed": 53710184,
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"tile == 0 or (tile == 1 and move == 1) or (tile == 2 and echo == 1) or (tile == 3 and echo == 2) or (tile == 4 and move == 1) or (tile == 5 and powered == 1)\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player is in a gate (2 or 3), they can only move east if the gate is open.\",\n      \"player_choice\": \"Move east\",\n      \"feedback\": \"If the gate is open, you can move east. If the gate is closed, you cannot move east.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the player is in a one-way marker (4), they can only move east if the marker is facing east.\",\n      \"player_choice\": \"Move east\",\n      \"feedback\": \"If the marker is facing east, you can move east. If the marker is facing west, you cannot move east.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"If the player is in a powered gate (5), they can only move east if the battery has been collected.\",\n      \"player_choice\": \"Move east\",\n      \"feedback\": \"If the battery has been collected, you can move east. If the battery has not been collected, you cannot move east.\"\n    }\n  ]\n}",
+        "input_tokens": 268,
+        "output_tokens": 319,
+        "cached_input_tokens": 0,
+        "total_tokens": 587,
+        "seconds": 15.438,
+        "creativity_proxy": 0.0,
+        "code_quality": 0.6666666666666666,
+        "task_completion": 0.0,
+        "error_rate": 1.0
+      },
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"tile == 0 or tile == 1\",\n  \"mechanics\": [\n    {\n      \"axis\": \"position\",\n      \"rule\": \"player_x == tile_x and player_y == tile_y\",\n      \"player_choice\": \"move\",\n      \"feedback\": \"You can enter the tile.\"\n    },\n    {\n      \"axis\": \"resource\",\n      \"rule\": \"echo == 1 or echo == 2\",\n      \"player_choice\": \"echo\",\n      \"feedback\": \"The echo opens A or B.\"\n    },\n    {\n      \"axis\": \"sequence\",\n      \"rule\": \"powered == 1\",\n      \"player_choice\": \"powered\",\n      \"feedback\": \"The powered gate opens after collecting the battery.\"\n    }\n  ]\n}",
+        "input_tokens": 2041,
+        "output_tokens": 167,
+        "cached_input_tokens": 262,
+        "total_tokens": 2208,
+        "seconds": 28.4174,
+        "creativity_proxy": 0.0,
+        "code_quality": 0.6666666666666666,
+        "task_completion": 0.0,
+        "error_rate": 1.0
+      }
+    },
+    {
+      "task": "yanki-gate",
+      "repeat": 2,
+      "order": [
+        "on",
+        "off"
+      ],
+      "seed": 1592467581,
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"tile == 0 or tile == 1\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"The player can enter a tile if it is open floor (0) or a wall (1).\",\n      \"player_choice\": \"The player can choose to enter the tile by pressing the appropriate button.\",\n      \"feedback\": \"If the player enters the tile, they can move east. If the tile is a wall, they cannot move.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"The player can discover the contents of the tile if it is a gate A (2) or a gate B (3).\",\n      \"player_choice\": \"The player can choose to discover the contents of the tile by pressing the appropriate button.\",\n      \"feedback\": \"If the player discovers a gate A, they can hold A. If the player discovers a gate B, they can hold B.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"The player can move east on the tile if it is a one-way marker (4) or a powered gate (5).\",\n      \"player_choice\": \"The player can choose to move east on the tile by pressing the appropriate button.\",\n      \"feedback\": \"If the player moves east on a one-way marker, they cannot move. If the player moves east on a powered gate, they can collect the battery.\"\n    }\n  ]\n}",
+        "input_tokens": 2041,
+        "output_tokens": 314,
+        "cached_input_tokens": 2040,
+        "total_tokens": 2355,
+        "seconds": 15.9411,
+        "creativity_proxy": 1.0,
+        "code_quality": 0.6666666666666666,
+        "task_completion": 0.0,
+        "error_rate": 1.0
+      },
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"tile == 0 or tile == 1 or tile == 2 or tile == 3 or tile == 4 or tile == 5\",\n  \"mechanics\": [\n    {\n      \"axis\": \"position\",\n      \"rule\": \"move == 1\",\n      \"player_choice\": \"move\",\n      \"feedback\": \"You can move east.\"\n    },\n    {\n      \"axis\": \"resource\",\n      \"rule\": \"echo == 1 or echo == 2\",\n      \"player_choice\": \"echo\",\n      \"feedback\": \"You have a marker.\"\n    },\n    {\n      \"axis\": \"sequence\",\n      \"rule\": \"powered == 1\",\n      \"player_choice\": \"powered\",\n      \"feedback\": \"You have collected the battery.\"\n    }\n  ]\n}",
+        "input_tokens": 268,
+        "output_tokens": 174,
+        "cached_input_tokens": 267,
+        "total_tokens": 442,
+        "seconds": 6.5119,
+        "creativity_proxy": 0.0,
+        "code_quality": 0.6666666666666666,
+        "task_completion": 0.0,
+        "error_rate": 1.0
+      }
+    }
+  ]
+}

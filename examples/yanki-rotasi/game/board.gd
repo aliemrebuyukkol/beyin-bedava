@@ -10,18 +10,28 @@ const AMBER := Color("#f3c175")
 const LILAC := Color("#c8aff6")
 
 var puzzle
+var focus_player := false
 
 
 func _draw() -> void:
 	draw_style_box(panel_style(), Rect2(Vector2.ZERO, size))
 	if puzzle == null:
 		return
-	var grid_width: int = puzzle.rows[0].length()
-	var grid_height: int = puzzle.rows.size()
-	var cell := floorf(minf((size.x - 38.0) / grid_width, (size.y - 38.0) / grid_height))
-	var origin := (size - Vector2(grid_width * cell, grid_height * cell)) / 2.0
-	for y in range(grid_height):
-		for x in range(grid_width):
+	var width: int = puzzle.rows[0].length()
+	var height: int = puzzle.rows.size()
+	var cell := floorf(minf((size.x - 20.0) / width, (size.y - 20.0) / height))
+	if focus_player:
+		cell = maxf(cell, 33.0)
+	var grid := Vector2(width, height) * cell
+	var origin := (size - grid) / 2.0
+	if grid.x > size.x - 16.0:
+		var follow: float = size.x / 2.0 - (puzzle.player.x + 0.5) * cell
+		origin.x = clampf(follow, size.x - grid.x - 8.0, 8.0)
+	if grid.y > size.y - 16.0:
+		var follow: float = size.y / 2.0 - (puzzle.player.y + 0.5) * cell
+		origin.y = clampf(follow, size.y - grid.y - 8.0, 8.0)
+	for y in range(height):
+		for x in range(width):
 			var point := Vector2i(x, y)
 			var top_left := origin + Vector2(point) * cell + Vector2.ONE * 2
 			var bounds := Rect2(top_left, Vector2.ONE * (cell - 4))
@@ -64,6 +74,15 @@ func draw_tile(tile: String, point: Vector2i, bounds: Rect2, cell: float) -> voi
 			if active:
 				draw_circle(middle, cell * 0.43, accent, false, 1.0, true)
 			center_text(tile.to_upper(), middle, accent, cell)
+	elif tile == ">":
+		draw_line(middle + Vector2(-cell * 0.18, 0), middle + Vector2(cell * 0.18, 0), LILAC, 2, true)
+		draw_line(middle + Vector2(cell * 0.18, 0), middle + Vector2(0, -cell * 0.16), LILAC, 2, true)
+		draw_line(middle + Vector2(cell * 0.18, 0), middle + Vector2(0, cell * 0.16), LILAC, 2, true)
+	elif tile == "X":
+		center_text("X", middle, MINT if puzzle.battery else AMBER, cell)
+	elif tile == "k" and not puzzle.battery:
+		draw_rect(Rect2(middle - Vector2.ONE * cell * 0.22, Vector2.ONE * cell * 0.44), LILAC, false, 2)
+		center_text("+", middle, LILAC, cell)
 	elif tile == "E":
 		var inset := bounds.grow(-cell * 0.18)
 		draw_rect(inset, MINT, false, 2)

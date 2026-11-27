@@ -26,7 +26,7 @@ MIT license.
 
 ## Örnek proje · Yankı Rotası
 
-Beyin-Bedava 2.1.0 ile geliştirilen dört bölümlük bir Godot bulmacası. Plakalara yankı bırakarak kapıları aç ve istasyondan çık.
+Beyin-Bedava 2.1.0 ile geliştirilen telefon ve masaüstü düzenleri olan altı bölümlük bir Godot bulmacası. Plakalara yankı bırakarak kapıları aç ve istasyondan çık.
 
 [**Tarayıcıda oyna**](https://yanki-rotasi.kafamdakisey.chatgpt.site) (ChatGPT hesabıyla) · [Web sürümünü indir](https://github.com/aliemrebuyukkol/beyin-bedava/archive/refs/heads/gh-pages.zip) · [Godot kaynak projesi ve çalıştırma talimatları](examples/yanki-rotasi/)
 

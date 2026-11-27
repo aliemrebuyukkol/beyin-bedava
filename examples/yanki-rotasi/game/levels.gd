@@ -3,7 +3,7 @@ extends RefCounted
 const LEVELS := [
 	{
 		"title": "İlk sinyal",
-		"brief": "A plakasına git ve yankı bırak. Yankın kapıyı açık tutarken çıkışa yürü.",
+		"brief": "A plakasına yankı bırak ve açık kapıdan çıkışa git.",
 		"rows": [
 			"#########",
 			"###.a####",
@@ -42,6 +42,32 @@ const LEVELS := [
 			"#.##.###.##..##",
 			"#a...###b###a##",
 			"###############",
+		],
+	},
+	{
+		"title": "Tek yön",
+		"brief": "Ok işaretli geçide soldan gir. B plakasında yankı bırak ve koridoru takip et.",
+		"rows": [
+			"##############",
+			"#S..>......BE#",
+			"#.##.####.####",
+			"#....#.......#",
+			"############.#",
+			"#########b...#",
+			"##############",
+		],
+	},
+	{
+		"title": "Yedek güç",
+		"brief": "A hattını aç. B kapısını geçmeden önce güç hücresini bul ve X kapısına güç ver.",
+		"rows": [
+			"################",
+			"#S...A...B...XE#",
+			"#.##.###.#######",
+			"#a...###b......#",
+			"##############.#",
+			"#############k.#",
+			"################",
 		],
 	},
 ]

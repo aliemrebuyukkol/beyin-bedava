@@ -1,0 +1,40 @@
+{
+  "action_limit": 96,
+  "first_seed": 4200,
+  "guided_policy": "Follow shortest solution on every second action when available.",
+  "random_policy": "Uniform selection among state-changing actions.",
+  "results": [
+    {
+      "guided_solved": 24,
+      "level": 1,
+      "random_solved": 17
+    },
+    {
+      "guided_solved": 24,
+      "level": 2,
+      "random_solved": 3
+    },
+    {
+      "guided_solved": 24,
+      "level": 3,
+      "random_solved": 0
+    },
+    {
+      "guided_solved": 24,
+      "level": 4,
+      "random_solved": 0
+    },
+    {
+      "guided_solved": 24,
+      "level": 5,
+      "random_solved": 0
+    },
+    {
+      "guided_solved": 19,
+      "level": 6,
+      "random_solved": 0
+    }
+  ],
+  "source": "synthetic",
+  "trials_per_level_and_policy": 24
+}
