@@ -40,6 +40,8 @@ SKIP_DIRS: Set[str] = {
 }
 
 TEXT_EXTENSIONS: Set[str] = {
+    ".swift",
+    ".dart",
     ".cs",
     ".cpp",
     ".c",
@@ -178,8 +180,30 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
                     engine = "pygame"
                 languages.add("python")
 
+    # Native game evidence: framework plus gameplay marker (not just a 3D viewer).
+    if engine == "non_game":
+        for f in files:
+            if f.suffix != ".swift":
+                continue
+            source = _read_text_safe(f)
+            if re.search(r"\b(SKScene|SKPhysicsContactDelegate|SKAction)\b", source) and re.search(r"\bimport\s+SpriteKit\b", source):
+                engine = "swift_spritekit"
+            elif re.search(r"\bimport\s+RealityKit\b", source) and re.search(r"\b(gameLoop|GameSystem|GameState|gameOver|PlayerController|gameState)\b", source):
+                engine = "swift_realitykit"
+            elif re.search(r"\bimport\s+SceneKit\b", source) and re.search(r"\b(SCNPhysicsContactDelegate|gameLoop|GameState|gameOver|gameState)\b", source):
+                engine = "swift_scenekit"
+            if engine != "non_game":
+                evidence.append(f"Native game framework and gameplay evidence: {f.relative_to(root)}")
+                break
+    manifest = root / "pubspec.yaml"
+    if engine == "non_game" and manifest.exists() and re.search(r"(?m)^\s+flame\s*:", _read_text_safe(manifest)):
+        if any(f.suffix == ".dart" and re.search(r"\b(FlameGame|GameWidget)\b", _read_text_safe(f)) for f in files):
+            engine = "flutter_flame"
+            evidence.append("Flame dependency and game source")
     # Fallback heuristic for custom HTML5/Canvas/React/TS games
     ext_map = {
+        ".swift": "swift",
+        ".dart": "dart",
         ".gd": "gdscript",
         ".cs": "csharp",
         ".cpp": "cpp",
@@ -202,7 +226,7 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
             if re.search(r"\b(requestanimationframe|gameloop|game_state|gameover|matchcard|phaser|pixi|new\s+game|oyun\b|oyunu)\b", txt) or "<canvas" in txt:
                 game_loop_hits += 1
 
-    if engine == "non_game" and game_loop_hits >= 2:
+    if engine == "non_game" and game_loop_hits >= 2 and ("typescript" in languages or "javascript" in languages):
         engine = "web_canvas" if ("typescript" in languages or "javascript" in languages) else "custom"
         evidence.append(f"Detected {game_loop_hits} files with game loop/state markers")
 
@@ -292,7 +316,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
     iap_provider = "stripe_web" if engine.startswith("web_") else "mock"
 
     return {
-        "schemaVersion": "1.1.0",
+        "schemaVersion": "2.0.0",
         "gameGenre": genre,
         "transparency": {
             "discloseMatchmaking": True,
@@ -302,7 +326,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
             "playerOptOutAllowed": True,
         },
         "matchmaking": {
-            "mode": "sbmm",
+            "mode": "disabled",
             "weights": {
                 "alpha_latency": 0.35,
                 "beta_skill": 0.55,
@@ -318,7 +342,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
             "maxConsecutiveLossesBeforeRelief": 2,
         },
         "dda": {
-            "enabled": True,
+            "enabled": False,
             "struggleThreshold": 0.50,
             "maxHitboxMultiplier": 1.25,
             "maxBulletMagnetism": 0.25,
@@ -336,12 +360,12 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
             "hardPityThreshold": 20,
         },
         "adPlacements": {
-            "enabled": True,
+            "enabled": False,
             "providerMode": "mock" if ad_provider != "mock" else "mock",
             "requireConsentBeforeInit": True,
             "removeAdsSkuId": "remove_ads",
             "rewarded": {
-                "enabled": True,
+                "enabled": False,
                 "optInOnly": True,
                 "showExactRewardPreview": True,
                 "forbidDdaRiggingForRevive": True,
@@ -349,7 +373,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
                 "placements": rewarded_by_genre.get(genre, rewarded_by_genre["other"]),
             },
             "interstitial": {
-                "enabled": True,
+                "enabled": False,
                 "boundaryOnly": True,
                 "onboardingGraceMatches": 3,
                 "minIntervalSeconds": 180,
@@ -364,7 +388,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
             },
         },
         "purchaseScreens": {
-            "enabled": True,
+            "enabled": False,
             "providerMode": "mock" if iap_provider != "mock" else "mock",
             "showRealMoneyEquivalent": True,
             "requireTwoStepConfirmation": True,
@@ -397,7 +421,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
             "layer1_grayscaleEnabled": False,
             "layer1_grayscaleBrightnessCap": 0.40,
             "layer2_cognitiveFrictionSeconds": 20,
-            "layer3_twoLossStopEnabled": True,
+            "layer3_twoLossStopEnabled": False,
             "layer3_twoLossStopMinutes": 30,
             "layer4_economicCoolingOffHours": 48,
             "layer4_disableOneClickBuy": True,
@@ -424,8 +448,15 @@ def main() -> int:
     config = build_recommended_config(genre, engine)
 
     if args.emit_config:
+        if not is_game:
+            print("Refusing config emission: no confirmed game project.", file=sys.stderr)
+            return 2
+        if args.emit_config.exists():
+            print("Refusing to overwrite existing config; review and migrate manually.", file=sys.stderr)
+            return 2
         args.emit_config.parent.mkdir(parents=True, exist_ok=True)
-        args.emit_config.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+        with args.emit_config.open("x", encoding="utf-8") as handle:
+            handle.write(json.dumps(config, indent=2) + "\n")
 
     result: Dict[str, Any] = {
         "workspace": str(root),
@@ -439,12 +470,9 @@ def main() -> int:
         "static_risk_signals": risk_signals,
         "recommended_config": config,
         "autonomous_action_plan": [
-            "1. Write/update beyin-bedava-config.json conforming to beyin-bedava-config.schema.json.",
-            "2. Implement TelemetryTracker state vector (s_i) and Matchmaking/DDA modules bounded by config.",
-            "3. Implement AdPlacementManager + MockAdProvider (boundary-only interstitials, 2-loss suppression, opt-in rewarded).",
-            "4. Implement StoreManager + Store UI + MockIAPProvider (real-money prices, 2-step confirm, Restore Purchases, odds).",
-            "5. Wire Algorithmic Transparency Panel & 5-Layer Player Protection toggles (Grayscale, 20s Friction, 2-Loss Stop, Cooling-Off, Quiet Mode).",
-            "6. Verify with simulate_eomm_dda.py, audit_telemetry.py, and project build/tests.",
+            "Read-only scan; confirm actual game intent and engine.",
+            "Select only relevant modules and explicit scope.",
+            "Implement only when requested; verify real builds and playtests.",
         ],
     }
 

@@ -103,7 +103,9 @@ def pair_pool(pool: List[SyntheticPlayer], mode: str) -> List[Tuple[SyntheticPla
 
     ordered = sorted(pool, key=lambda p: p.skill)
     if len(ordered) % 2 == 1:
-        ordered = ordered[:-1]
+        # Caller shuffles pool each round, so the bye is not tied to skill.
+        bye = pool[-1]
+        ordered = [p for p in ordered if p is not bye]
 
     group_a = ordered[0::2]
     group_b = ordered[1::2]
@@ -276,9 +278,13 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Output JSON instead of text summary.")
     args = parser.parse_args()
 
-    n_per_group = max(10, args.players // 2)
+    if args.players < 20 or args.players % 2 or args.matches < 1 or args.pool_size < 2:
+        parser.error("players must be even and >=20; matches >=1; pool-size >=2")
+    if not 0 <= args.dda_struggle_threshold <= 1 or not 1 <= args.max_hitbox <= 1.25 or not 1 <= args.max_damage <= 1.18:
+        parser.error("DDA parameters outside documented bounds")
+    n_per_group = args.players // 2
     rng_sbmm = random.Random(args.seed)
-    rng_eomm = random.Random(args.seed + 1)
+    rng_eomm = random.Random(args.seed)
 
     sbmm_sessions = simulate_group(n_per_group, args.matches, args.pool_size, "sbmm", rng_sbmm)
     eomm_sessions = simulate_group(n_per_group, args.matches, args.pool_size, "eomm", rng_eomm)
@@ -289,13 +295,18 @@ def main() -> int:
         max_hitbox=args.max_hitbox,
         max_damage=args.max_damage,
     )
-    payload = {"simulation": stats, "dda": dda, "scipy_enabled": HAS_SCIPY}
+    payload = {"simulation": stats, "dda": dda, "scipy_enabled": HAS_SCIPY,
+               "limitations": ["Synthetic model with assumed churn weights; not empirical evidence.",
+                               "Session length measured in matches, not minutes.",
+                               "DDA profile is separate and not integrated into simulated match outcomes.",
+                               "Equal seeded initial populations; subsequent random streams diverge."]}
 
     if args.json:
         print(json.dumps(payload, indent=2))
         return 0
 
-    print("=== EOMM vs SBMM Stochastic Simulation ===")
+    print("=== Synthetic EOMM vs SBMM model (not empirical player evidence) ===")
+    print("DDA profile is independent; session length is match count.")
     print(f"Players/group: {stats['n_per_group']} | Max matches: {args.matches} | Pool size: {args.pool_size}")
     print(f"SBMM mean/median matches: {stats['sbmm_mean_matches']} / {stats['sbmm_median_matches']}")
     print(f"EOMM mean/median matches: {stats['eomm_mean_matches']} / {stats['eomm_median_matches']}")

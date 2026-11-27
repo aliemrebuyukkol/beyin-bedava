@@ -1,5 +1,7 @@
 # Mathematical Models & Algorithms (EOMM, Commercial Matchmaking, DDA)
 
+> **v2 scope:** Legacy research/reference material, not default implementation. Live matchmaking must be fair and independent of churn or spending; hidden outcome manipulation is prohibited. Numerical thresholds and neurobiological claims are hypotheses, not universal or clinical evidence. Optional protections must respect accessibility and genre. Use the v2 SKILL.md and schema in any conflict.
+
 Exact formulations, variables, empirical benchmarks, and engine-agnostic implementation patterns from Sections 2.1–2.3, 4.1, and 5 of *Algoritmik Etkileşim Mimarisi ve Davranışsal Şartlanma*.
 
 ---
@@ -48,7 +50,7 @@ where:
 
 $$E[\text{Churn}_u \mid s_u, p] = p \cdot P(\text{Churn}_u \mid s_u, W) + (1 - p) \cdot P(\text{Churn}_u \mid s_u, L)$$
 
-Solve for minimum total churn risk via **Minimum Weight Perfect Matching** or **Linear Sum Assignment** (`scipy.optimize.linear_sum_assignment` on the pool cost matrix).
+For a general undirected pool, use minimum-weight matching with each vertex used at most once; linear assignment is valid only for disjoint bipartite groups. Research only.
 
 ### Pseudocode (EOMM Pool Matcher)
 
@@ -63,8 +65,7 @@ function match_pool_eomm(players):
       churn_u = p_win_u * churn_if(players[u].state, WIN) + (1 - p_win_u) * churn_if(players[u].state, LOSS)
       churn_v = (1 - p_win_u) * churn_if(players[v].state, WIN) + p_win_u * churn_if(players[v].state, LOSS)
       cost_matrix[u][v] = churn_u + churn_v
-  pairs = linear_sum_assignment(cost_matrix)
-  return deduplicate_undirected_pairs(pairs)
+  return minimum_weight_undirected_matching(cost_matrix)  # one match per vertex; handle byes
 ```
 
 ---

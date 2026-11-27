@@ -1,0 +1,5 @@
+# Game DNA and core loop
+Before broad changes capture: audience and accessibility, genre and camera, player fantasy in one sentence, core verb, meaningful choice, immediate feedback, stakes, recovery, session rhythm, progression, visual/audio identity, engine/device constraints and explicit non-goals. Separate facts from assumptions.
+Write a playable loop: intention → input → state transition → readable feedback → meaningful consequence → next choice. Test a 30-second first interaction, 5-minute session and return after a week. No reward can compensate for an uninteresting verb.
+Define acceptance with observable behaviors (e.g. novice understands goal without text; can recover from failure; controls respond consistently), not subjective scores masquerading as measurements.
+Create a vertical slice before scaling content. Compare existing games by specific design principles, not copied assets. Preserve project identity. Include a no-monetization and no-progression baseline when testing the core loop.

@@ -1,0 +1,2 @@
+# Flutter / Flame
+Detect flame dependency in pubspec.yaml and Dart sources; distinguish Flutter UI from games. Use FlameGame lifecycle, components, collision callbacks and overlays; keep simulation independent of widget rebuilds. Handle resize, pause/resume and input coordinates; test fixed-step behavior where needed. Use flutter test and real device profiling; preserve existing billing provider and sandbox isolation. Verify installed dependency versions before selecting APIs.

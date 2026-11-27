@@ -1,0 +1,6 @@
+# Scoped autonomous execution and recovery
+1. Read current branch/status and project docs; do not reset, stash, force-push or overwrite user work. Record baseline and constraints. 
+2. For multi-step tasks maintain a local, non-secret task ledger (suggested .beyin-bedava/state.json, ignored if appropriate): goal, baseline revision, tasks with IDs, dependencies, status (pending/in_progress/verified/blocked), touched files, acceptance, commands/results, blockers, next action. Atomic write; never store credentials or raw player data. On resume re-read current files and git status before trusting ledger.
+3. Work by vertical slice and dependency order. Run relevant tests per slice; distinguish not run, failed and passed. On failure inspect root cause and fix within scope; after two repeated identical failures change approach or mark blocker. Avoid endless retries and unnecessary rewrites.
+4. If user decisions are not essential, pick a reversible default and disclose it. Ask only for irreversible scope, live payments, secrets, destructive changes or genuinely blocked work. Continue independent tasks when possible.
+5. Before commit inspect diff, test and document evidence. Only commit/push when requested or authorized. No force pushes. If interrupted, return exact checkpoint and next command. A ledger does not schedule work or guarantee host resume.

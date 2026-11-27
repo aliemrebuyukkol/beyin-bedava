@@ -22,6 +22,7 @@ DEMO_TELEMETRY: Dict[str, Any] = {
     "match_history": [
         "W", "L", "L", "W", "L", "L", "W", "L", "W", "L",
         "L", "W", "W", "L", "L", "W", "L", "W", "L", "L", "W",
+        "W", "L", "L", "W", "L", "W", "W", "L", "W",
     ],
     "session_durations_minutes": [42, 58, 76, 94, 112, 128],
     "baseline_session_minutes": 45.0,
@@ -96,6 +97,7 @@ def stage1_diagnose(data: Dict[str, Any]) -> Dict[str, Any]:
         "losses": losses,
         "max_consecutive_losses": max_loss_streak,
         "post_2loss_win_rebound_rate": round(rebound_rate, 3),
+        "post_2loss_opportunities": post_2loss_opportunities,
         "wlw_triplets": wlw_count,
         "lll_triplets": lll_count,
         "avg_session_minutes": round(avg_session, 1),
@@ -108,11 +110,11 @@ def stage1_diagnose(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def stage2_classify(data: Dict[str, Any], diag: Dict[str, Any]) -> Dict[str, Any]:
     eomm_signals: List[str] = []
-    if diag["post_2loss_win_rebound_rate"] >= 0.70:
+    if diag["post_2loss_opportunities"] >= 20 and diag["post_2loss_win_rebound_rate"] >= 0.70:
         eomm_signals.append(
             f"High post-2-loss rebound rate ({diag['post_2loss_win_rebound_rate']*100:.0f}%)"
         )
-    if diag["wlw_triplets"] >= 2 and diag["lll_triplets"] == 0:
+    if diag["total_matches"] >= 30 and diag["wlw_triplets"] >= 5 and diag["lll_triplets"] == 0:
         eomm_signals.append("Suppressed L-L-L streaks alongside repeated W-L-W retention loops")
 
     dda_signals: List[str] = []
@@ -168,6 +170,7 @@ def stage2_classify(data: Dict[str, Any], diag: Dict[str, Any]) -> Dict[str, Any
 
     return {
         "EOMM_detected": len(eomm_signals) > 0,
+        "EOMM_evidence_status": "insufficient" if diag["post_2loss_opportunities"] < 20 else "screening_only",
         "EOMM_signals": eomm_signals,
         "DDA_detected": len(dda_signals) > 0,
         "DDA_signals": dda_signals,
@@ -328,13 +331,42 @@ def main() -> int:
     if not args.demo and not args.input:
         parser.error("Provide --input <path.json> or --demo")
 
-    data = DEMO_TELEMETRY if args.demo else json.loads(args.input.read_text(encoding="utf-8"))
-    s1 = stage1_diagnose(data)
-    s2 = stage2_classify(data, s1)
-    s3 = stage3_risk_score(data, s1)
-    s4 = stage4_assign_protocols(s2, s3)
+    try:
+        data = DEMO_TELEMETRY if args.demo else json.loads(args.input.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"Invalid telemetry input: {exc}", file=sys.stderr)
+        return 2
+    if not isinstance(data, dict):
+        print("Invalid telemetry: expected a JSON object.", file=sys.stderr)
+        return 2
+    history = data.get("match_history")
+    if not isinstance(history, list) or any(x not in ("W", "L") for x in history):
+        print("Insufficient or malformed match_history; no safety conclusion.", file=sys.stderr)
+        return 2
+    if len(history) < 30 or not isinstance(data.get("ads"), dict) or not isinstance(data.get("economy"), dict):
+        print("Insufficient telemetry for full audit; provide at least 30 outcomes and explicit ads/economy objects.", file=sys.stderr)
+        return 2
+    required = {
+        "session_durations_minutes", "baseline_session_minutes",
+        "accuracy_during_struggle_delta", "damage_multiplier_observed",
+        "critical_hp_clutch_rate", "loot_near_miss_rate",
+        "daily_variable_ratio_pulls", "zeigarnik_triggers",
+    }
+    missing = sorted(required - data.keys())
+    if missing:
+        print("Insufficient telemetry; missing: " + ", ".join(missing), file=sys.stderr)
+        return 2
+    try:
+        s1 = stage1_diagnose(data)
+        s2 = stage2_classify(data, s1)
+        s3 = stage3_risk_score(data, s1)
+        s4 = stage4_assign_protocols(s2, s3)
+    except (TypeError, ValueError, AttributeError, ZeroDivisionError) as exc:
+        print(f"Malformed telemetry: {exc}", file=sys.stderr)
+        return 2
 
     report = {
+        "interpretation": "Heuristic screening only; not a clinical measure or proof of manipulation. Missing metrics are unknown.",
         "player_id": data.get("player_id", "unknown"),
         "stage_1_telemetry_diagnosis": s1,
         "stage_2_algorithmic_classification": s2,
@@ -346,7 +378,7 @@ def main() -> int:
         print(json.dumps(report, indent=2))
     else:
         print(render_markdown(report))
-    return 0
+    return 1 if s2["DARK_PATTERN_detected"] or data["ads"].get("dda_rigged_for_rewarded_revive") else 0
 
 
 if __name__ == "__main__":

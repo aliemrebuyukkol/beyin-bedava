@@ -1,5 +1,7 @@
 # Genre Adapter Matrix & Engine Integration Blueprints
 
+> **v2 scope:** Legacy research/reference material, not default implementation. Live matchmaking must be fair and independent of churn or spending; hidden outcome manipulation is prohibited. Numerical thresholds and neurobiological claims are hypotheses, not universal or clinical evidence. Optional protections must respect accessibility and genre. Use the v2 SKILL.md and schema in any conflict.
+
 How to translate EOMM, DDA, behavioral loops, **Ad Placements**, **Purchase/IAP Screens**, transparency, and the 5-layer hygiene protocol into **any game genre and engine**.
 
 ---

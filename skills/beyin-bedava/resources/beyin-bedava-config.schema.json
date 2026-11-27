@@ -19,60 +19,137 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "default": "1.1.0"
+      "default": "2.0.0"
     },
     "gameGenre": {
       "type": "string",
-      "enum": ["fps", "action_platformer", "rpg_roguelike", "puzzle_casual", "strategy_card", "racing_sports", "other"],
+      "enum": [
+        "fps",
+        "action_platformer",
+        "rpg_roguelike",
+        "puzzle_casual",
+        "strategy_card",
+        "racing_sports",
+        "other"
+      ],
       "default": "other"
     },
     "transparency": {
       "type": "object",
-      "required": ["discloseMatchmaking", "discloseDDA", "discloseOdds", "discloseAdRules", "playerOptOutAllowed"],
+      "required": [
+        "discloseMatchmaking",
+        "discloseDDA",
+        "discloseOdds",
+        "discloseAdRules",
+        "playerOptOutAllowed"
+      ],
       "additionalProperties": false,
       "properties": {
-        "discloseMatchmaking": { "type": "boolean", "default": true },
-        "discloseDDA": { "type": "boolean", "default": true },
-        "discloseOdds": { "type": "boolean", "default": true },
-        "discloseAdRules": { "type": "boolean", "default": true },
-        "playerOptOutAllowed": { "type": "boolean", "default": true }
+        "discloseMatchmaking": {
+          "type": "boolean",
+          "default": true
+        },
+        "discloseDDA": {
+          "type": "boolean",
+          "default": true
+        },
+        "discloseOdds": {
+          "type": "boolean",
+          "default": true
+        },
+        "discloseAdRules": {
+          "type": "boolean",
+          "default": true
+        },
+        "playerOptOutAllowed": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
     "matchmaking": {
       "type": "object",
-      "required": ["mode", "weights", "maxConsecutiveLossesBeforeRelief"],
+      "required": [
+        "mode",
+        "weights",
+        "maxConsecutiveLossesBeforeRelief"
+      ],
       "additionalProperties": false,
       "properties": {
         "mode": {
           "type": "string",
-          "enum": ["sbmm", "eomm", "hybrid"],
-          "default": "sbmm"
+          "enum": [
+            "disabled",
+            "sbmm"
+          ],
+          "default": "disabled"
         },
         "weights": {
           "type": "object",
-          "required": ["alpha_latency", "beta_skill", "gamma_monetization", "delta_social"],
+          "required": [
+            "alpha_latency",
+            "beta_skill",
+            "gamma_monetization",
+            "delta_social"
+          ],
           "additionalProperties": false,
           "properties": {
-            "alpha_latency": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.35 },
-            "beta_skill": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.55 },
+            "alpha_latency": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.35
+            },
+            "beta_skill": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.55
+            },
             "gamma_monetization": {
               "type": "number",
               "minimum": 0,
               "maximum": 1,
-              "default": 0.0,
-              "description": "Must remain 0.0 in live production to prevent predatory conversion-biased matchmaking."
+              "default": 0,
+              "description": "Must remain 0.0 in live production to prevent predatory conversion-biased matchmaking.",
+              "const": 0
             },
-            "delta_social": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.10 }
+            "delta_social": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.1
+            }
           }
         },
         "eommChurnWeights": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "consecutiveLoss3": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.72 },
-            "consecutiveLoss2": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.45 },
-            "alternatingWLW": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.14 },
-            "consecutiveWin3": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.28 }
+            "consecutiveLoss3": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.72
+            },
+            "consecutiveLoss2": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.45
+            },
+            "alternatingWLW": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.14
+            },
+            "consecutiveWin3": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.28
+            }
           }
         },
         "maxConsecutiveLossesBeforeRelief": {
@@ -96,13 +173,46 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean", "default": true },
-        "struggleThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.50 },
-        "maxHitboxMultiplier": { "type": "number", "minimum": 1.0, "maximum": 2.0, "default": 1.25 },
-        "maxBulletMagnetism": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.25 },
-        "maxDamageMultiplier": { "type": "number", "minimum": 1.0, "maximum": 2.0, "default": 1.18 },
-        "criticalHpThreshold": { "type": "number", "minimum": 0.01, "maximum": 0.50, "default": 0.15 },
-        "criticalHpDampingRate": { "type": "number", "minimum": 0.0, "maximum": 10.0, "default": 3.0 }
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "struggleThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.5
+        },
+        "maxHitboxMultiplier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1.25,
+          "default": 1.25
+        },
+        "maxBulletMagnetism": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.25,
+          "default": 0.25
+        },
+        "maxDamageMultiplier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1.18,
+          "default": 1.18
+        },
+        "criticalHpThreshold": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 0.5,
+          "default": 0.15
+        },
+        "criticalHpDampingRate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3
+        }
       }
     },
     "economy": {
@@ -117,57 +227,144 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "softCurrencyName": { "type": "string", "default": "coins" },
-        "hardCurrencyName": { "type": "string", "default": "none" },
+        "softCurrencyName": {
+          "type": "string",
+          "default": "coins"
+        },
+        "hardCurrencyName": {
+          "type": "string",
+          "default": "none"
+        },
         "faucets": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["match_completion", "milestone_quest"]
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "match_completion",
+            "milestone_quest"
+          ]
         },
         "sinks": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["cosmetics", "upgrades"]
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "cosmetics",
+            "upgrades"
+          ]
         },
-        "preventBundlePriceMismatch": { "type": "boolean", "default": true },
-        "showRealMoneyEquivalent": { "type": "boolean", "default": true },
-        "hardPityThreshold": { "type": "integer", "minimum": 1, "default": 20 }
+        "preventBundlePriceMismatch": {
+          "type": "boolean",
+          "default": true
+        },
+        "showRealMoneyEquivalent": {
+          "type": "boolean",
+          "default": true
+        },
+        "hardPityThreshold": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 20
+        }
       }
     },
     "adPlacements": {
       "type": "object",
-      "required": ["enabled", "providerMode", "rewarded", "interstitial", "banner", "removeAdsSkuId"],
+      "required": [
+        "enabled",
+        "providerMode",
+        "rewarded",
+        "interstitial",
+        "banner",
+        "removeAdsSkuId"
+      ],
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean", "default": true },
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
         "providerMode": {
           "type": "string",
-          "enum": ["mock", "admob_test", "unity_ads", "applovin_max", "h5_sdk", "custom"],
+          "enum": [
+            "mock",
+            "admob_test",
+            "unity_ads",
+            "applovin_max",
+            "h5_sdk",
+            "custom"
+          ],
           "default": "mock"
         },
-        "requireConsentBeforeInit": { "type": "boolean", "default": true },
-        "removeAdsSkuId": { "type": "string", "default": "remove_ads" },
+        "requireConsentBeforeInit": {
+          "type": "boolean",
+          "default": true
+        },
+        "removeAdsSkuId": {
+          "type": "string",
+          "default": "remove_ads"
+        },
         "rewarded": {
           "type": "object",
-          "required": ["enabled", "optInOnly", "showExactRewardPreview", "forbidDdaRiggingForRevive", "maxPerSession", "placements"],
+          "required": [
+            "enabled",
+            "optInOnly",
+            "showExactRewardPreview",
+            "forbidDdaRiggingForRevive",
+            "maxPerSession",
+            "placements"
+          ],
           "additionalProperties": false,
           "properties": {
-            "enabled": { "type": "boolean", "default": true },
-            "optInOnly": { "type": "boolean", "default": true },
-            "showExactRewardPreview": { "type": "boolean", "default": true },
-            "forbidDdaRiggingForRevive": { "type": "boolean", "default": true },
-            "maxPerSession": { "type": "integer", "minimum": 0, "maximum": 50, "default": 5 },
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "optInOnly": {
+              "type": "boolean",
+              "default": true
+            },
+            "showExactRewardPreview": {
+              "type": "boolean",
+              "default": true
+            },
+            "forbidDdaRiggingForRevive": {
+              "type": "boolean",
+              "default": true
+            },
+            "maxPerSession": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 50,
+              "default": 5
+            },
             "placements": {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["id", "surface", "rewardType", "rewardAmount"],
+                "required": [
+                  "id",
+                  "surface",
+                  "rewardType",
+                  "rewardAmount"
+                ],
                 "additionalProperties": false,
                 "properties": {
-                  "id": { "type": "string" },
-                  "surface": { "type": "string" },
-                  "rewardType": { "type": "string" },
-                  "rewardAmount": { "type": "integer", "minimum": 1 }
+                  "id": {
+                    "type": "string"
+                  },
+                  "surface": {
+                    "type": "string"
+                  },
+                  "rewardType": {
+                    "type": "string"
+                  },
+                  "rewardAmount": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
                 }
               },
               "default": []
@@ -176,29 +373,79 @@
         },
         "interstitial": {
           "type": "object",
-          "required": ["enabled", "boundaryOnly", "onboardingGraceMatches", "minIntervalSeconds", "minMatchesBetween", "suppressAfterConsecutiveLosses"],
+          "required": [
+            "enabled",
+            "boundaryOnly",
+            "onboardingGraceMatches",
+            "minIntervalSeconds",
+            "minMatchesBetween",
+            "suppressAfterConsecutiveLosses"
+          ],
           "additionalProperties": false,
           "properties": {
-            "enabled": { "type": "boolean", "default": false },
-            "boundaryOnly": { "type": "boolean", "default": true },
-            "onboardingGraceMatches": { "type": "integer", "minimum": 0, "default": 3 },
-            "minIntervalSeconds": { "type": "integer", "minimum": 60, "default": 180 },
-            "minMatchesBetween": { "type": "integer", "minimum": 1, "default": 2 },
-            "suppressAfterConsecutiveLosses": { "type": "integer", "minimum": 1, "default": 2 }
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "boundaryOnly": {
+              "type": "boolean",
+              "default": true
+            },
+            "onboardingGraceMatches": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 3
+            },
+            "minIntervalSeconds": {
+              "type": "integer",
+              "minimum": 60,
+              "default": 180
+            },
+            "minMatchesBetween": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 2
+            },
+            "suppressAfterConsecutiveLosses": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 2
+            }
           }
         },
         "banner": {
           "type": "object",
-          "required": ["enabled", "hideDuringGameplay", "safeMarginPx", "allowedScreens"],
+          "required": [
+            "enabled",
+            "hideDuringGameplay",
+            "safeMarginPx",
+            "allowedScreens"
+          ],
           "additionalProperties": false,
           "properties": {
-            "enabled": { "type": "boolean", "default": false },
-            "hideDuringGameplay": { "type": "boolean", "default": true },
-            "safeMarginPx": { "type": "integer", "minimum": 16, "default": 16 },
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "hideDuringGameplay": {
+              "type": "boolean",
+              "default": true
+            },
+            "safeMarginPx": {
+              "type": "integer",
+              "minimum": 16,
+              "default": 16
+            },
             "allowedScreens": {
               "type": "array",
-              "items": { "type": "string" },
-              "default": ["lobby", "pause", "summary"]
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "lobby",
+                "pause",
+                "summary"
+              ]
             }
           }
         }
@@ -220,37 +467,101 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean", "default": true },
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
         "providerMode": {
           "type": "string",
-          "enum": ["mock", "sandbox", "revenuecat", "storekit2", "google_play", "unity_iap", "godot_billing", "stripe_web"],
+          "enum": [
+            "mock",
+            "sandbox",
+            "revenuecat",
+            "storekit2",
+            "google_play",
+            "unity_iap",
+            "godot_billing",
+            "stripe_web"
+          ],
           "default": "mock"
         },
-        "showRealMoneyEquivalent": { "type": "boolean", "default": true },
-        "requireTwoStepConfirmation": { "type": "boolean", "default": true },
-        "preventBundlePriceMismatch": { "type": "boolean", "default": true },
-        "showDropOddsAndPity": { "type": "boolean", "default": true },
-        "allowFakeResettingTimers": { "type": "boolean", "default": false },
-        "requireRestorePurchasesButton": { "type": "boolean", "default": true },
+        "showRealMoneyEquivalent": {
+          "type": "boolean",
+          "default": true
+        },
+        "requireTwoStepConfirmation": {
+          "type": "boolean",
+          "default": true
+        },
+        "preventBundlePriceMismatch": {
+          "type": "boolean",
+          "default": true
+        },
+        "showDropOddsAndPity": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowFakeResettingTimers": {
+          "type": "boolean",
+          "default": false
+        },
+        "requireRestorePurchasesButton": {
+          "type": "boolean",
+          "default": true
+        },
         "categories": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["Featured", "Cosmetics", "Remove Ads"]
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Featured",
+            "Cosmetics",
+            "Remove Ads"
+          ]
         },
         "catalog": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["sku", "title", "category", "type", "priceUsd"],
+            "required": [
+              "sku",
+              "title",
+              "category",
+              "type",
+              "priceUsd"
+            ],
             "additionalProperties": false,
             "properties": {
-              "sku": { "type": "string" },
-              "title": { "type": "string" },
-              "category": { "type": "string" },
-              "type": { "type": "string", "enum": ["non_consumable", "consumable", "subscription", "cosmetic_direct"] },
-              "priceUsd": { "type": "number", "minimum": 0 },
-              "softCurrencyGrant": { "type": "integer", "minimum": 0 },
-              "description": { "type": "string" }
+              "sku": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "non_consumable",
+                  "consumable",
+                  "subscription",
+                  "cosmetic_direct"
+                ]
+              },
+              "priceUsd": {
+                "type": "number",
+                "minimum": 0
+              },
+              "softCurrencyGrant": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": {
+                "type": "string"
+              }
             }
           },
           "default": []
@@ -268,14 +579,46 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "layer1_grayscaleEnabled": { "type": "boolean", "default": false },
-        "layer1_grayscaleBrightnessCap": { "type": "number", "minimum": 0.1, "maximum": 1.0, "default": 0.40 },
-        "layer2_cognitiveFrictionSeconds": { "type": "integer", "minimum": 0, "maximum": 120, "default": 20 },
-        "layer3_twoLossStopEnabled": { "type": "boolean", "default": true },
-        "layer3_twoLossStopMinutes": { "type": "integer", "minimum": 5, "maximum": 120, "default": 30 },
-        "layer4_economicCoolingOffHours": { "type": "integer", "minimum": 0, "maximum": 168, "default": 48 },
-        "layer4_disableOneClickBuy": { "type": "boolean", "default": true },
-        "layer5_suppressZeigarnikNotifications": { "type": "boolean", "default": true }
+        "layer1_grayscaleEnabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "layer1_grayscaleBrightnessCap": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1,
+          "default": 0.4
+        },
+        "layer2_cognitiveFrictionSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "default": 20
+        },
+        "layer3_twoLossStopEnabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "layer3_twoLossStopMinutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 120,
+          "default": 30
+        },
+        "layer4_economicCoolingOffHours": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 168,
+          "default": 48
+        },
+        "layer4_disableOneClickBuy": {
+          "type": "boolean",
+          "default": true
+        },
+        "layer5_suppressZeigarnikNotifications": {
+          "type": "boolean",
+          "default": true
+        }
       }
     }
   }

@@ -1,5 +1,7 @@
 # Player Protection, Transparency & 4-Stage AI Audit Protocol
 
+> **v2 scope:** Legacy research/reference material, not default implementation. Live matchmaking must be fair and independent of churn or spending; hidden outcome manipulation is prohibited. Numerical thresholds and neurobiological claims are hypotheses, not universal or clinical evidence. Optional protections must respect accessibility and genre. Use the v2 SKILL.md and schema in any conflict.
+
 Operational specifications from Sections 4.2, 5.1, 6, and 6.1 of *Algoritmik Etkileşim Mimarisi ve Davranışsal Şartlanma*, extended with Ad Placement and Purchase/IAP Dark Pattern diagnostics.
 
 ---
