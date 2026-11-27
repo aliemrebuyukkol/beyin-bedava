@@ -1,0 +1,54 @@
+{
+  "benchmark_kind": "real_codex_cli",
+  "model_requested": "gpt-5.4",
+  "seed": 42,
+  "repeats_per_task": 1,
+  "modules": [
+    "SKILL.md",
+    "intelligence/creative-mechanics.md",
+    "intelligence/game-feel.md"
+  ],
+  "timeout_seconds": 25,
+  "tasks_sha256": "9a0bb87dc93083c12dea1d8f0c995a3f44de35d675dc9578396e903f7532b693",
+  "skill_context_sha256": "3565f9d8e7efe827fef22dba3a2874baad5c7a2197f0c2b9dc1be4c7a1b094a2",
+  "summary": {
+    "completed_pairs": 0,
+    "metrics": {
+      "creativity_proxy": null,
+      "code_quality": null,
+      "task_completion": null,
+      "error_rate": null,
+      "input_tokens": null,
+      "cached_input_tokens": null,
+      "output_tokens": null,
+      "total_tokens": null,
+      "seconds": null
+    },
+    "provider_error_rate": {
+      "off": 1,
+      "on": 1
+    }
+  },
+  "pairs": [
+    {
+      "task": "pulse-gate",
+      "repeat": 1,
+      "order": [
+        "on",
+        "off"
+      ],
+      "on": {
+        "status": "provider_error",
+        "error": "authentication",
+        "exit_code": 1,
+        "seconds": 1.2452
+      },
+      "off": {
+        "status": "provider_error",
+        "error": "authentication",
+        "exit_code": 1,
+        "seconds": 1.3199
+      }
+    }
+  ]
+}

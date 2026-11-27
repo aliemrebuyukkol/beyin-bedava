@@ -1,0 +1,26 @@
+[
+  {
+    "id": "pulse-gate",
+    "brief": "A player can charge a gate from 0 to 3. Given charge (0..3), action (0=charge, 1=pulse, 2=reset), and opened (0 or 1), return new charge. Reset sets it to zero regardless. An open gate stays unchanged for other actions. Charging adds one capped at 3. A pulse consumes all charge only when charge is 3. Design alternatives for opening a gate with readable feedback and no grind.",
+    "names": ["charge", "action", "opened"],
+    "domains": [[0, 1, 2, 3], [0, 1, 2], [0, 1]],
+    "cases": [[[0, 0, 0], 1], [[3, 0, 0], 3], [[2, 1, 0], 2], [[3, 1, 0], 0], [[2, 2, 1], 0], [[2, 0, 1], 2], [[3, 1, 1], 3]],
+    "bounds": [0, 3]
+  },
+  {
+    "id": "optional-assist",
+    "brief": "Given failed attempts (0..6), opt_in (0 or 1) and competitive (0 or 1), return the number of extra seconds. Only opted-in noncompetitive players get help. Fewer than two failures yields zero, then two extra seconds per failure after the first, capped at six. Design alternatives that let the player choose help without hiding rule changes.",
+    "names": ["failures", "opt_in", "competitive"],
+    "domains": [[0, 1, 2, 3, 4, 5, 6], [0, 1], [0, 1]],
+    "cases": [[[0, 1, 0], 0], [[1, 1, 0], 0], [[2, 1, 0], 2], [[3, 1, 0], 4], [[5, 1, 0], 6], [[6, 0, 0], 0], [[6, 1, 1], 0]],
+    "bounds": [0, 6]
+  },
+  {
+    "id": "practice-medals",
+    "brief": "Given successes (0..5), hints (0..3) and practice (0 or 1), award zero medals for practice mode. Otherwise give two medals per success, subtract one per hint, floor at zero, cap at seven. Design alternative ways to encourage mastery that keep hints voluntary and free.",
+    "names": ["successes", "hints", "practice"],
+    "domains": [[0, 1, 2, 3, 4, 5], [0, 1, 2, 3], [0, 1]],
+    "cases": [[[0, 0, 0], 0], [[1, 3, 0], 0], [[2, 2, 0], 2], [[3, 1, 0], 5], [[5, 1, 0], 7], [[5, 0, 1], 0]],
+    "bounds": [0, 7]
+  }
+]

@@ -1,31 +1,16 @@
 #!/usr/bin/env python3
-"""Stochastic EOMM vs SBMM & DDA Validation Simulator.
-
-Implements the computational simulation model from Sections 4.1 and 5 of:
-"Algoritmik Etkileşim Mimarisi ve Davranışsal Şartlanma"
-
-Uses scipy (linear_sum_assignment, mannwhitneyu, ttest_ind) when available,
-with pure-stdlib fallbacks for zero-dependency portability.
-"""
+"""Replicated synthetic matchmaking scenarios and independent DDA bounds."""
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import math
 import random
 import statistics
 import sys
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-
-try:
-    import numpy as np
-    from scipy.optimize import linear_sum_assignment
-    from scipy.stats import mannwhitneyu, ttest_ind
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-
+from typing import Dict, List, Tuple
 
 def sigmoid(z: float) -> float:
     z = max(-30.0, min(30.0, z))
@@ -38,13 +23,7 @@ def elo_win_prob(skill_a: float, skill_b: float, scale: float = 6.0) -> float:
 
 
 def churn_probability(history: List[str], next_outcome: str, matches_played: int) -> float:
-    """Empirical churn risk model P(Churn | s_i, o) = sigma(w^T phi(s_i, o) + b).
-
-    Captures EA EOMM findings:
-    - L-L-L drives churn risk to peak (~45-55%).
-    - W-L-W yields lowest churn risk (~2-3%, highest retention).
-    - Single loss after wins (W-W-L / W-L) keeps churn low (~3-4%).
-    """
+    """Assumed scenario parameters, without calibration to human data."""
     seq = (history + [next_outcome])[-3:]
     pattern = "".join(seq)
 
@@ -97,7 +76,7 @@ def _greedy_bipartite_match(cost_matrix: List[List[float]]) -> List[Tuple[int, i
 
 
 def pair_pool(pool: List[SyntheticPlayer], mode: str) -> List[Tuple[SyntheticPlayer, SyntheticPlayer]]:
-    """Pair players in a lobby pool using SBMM or EOMM Linear Sum Assignment."""
+    """Pair players in a lobby pool using adjacent SBMM or greedy experimental pairing."""
     if len(pool) < 2:
         return []
 
@@ -109,34 +88,25 @@ def pair_pool(pool: List[SyntheticPlayer], mode: str) -> List[Tuple[SyntheticPla
 
     group_a = ordered[0::2]
     group_b = ordered[1::2]
-    n = len(group_a)
-
     if mode == "sbmm":
-        # Adjacent sorted skills minimize |P(Win) - 0.50|
-        cost_matrix = [
-            [abs(elo_win_prob(a.skill, b.skill) - 0.50) for b in group_b]
-            for a in group_a
-        ]
-    else:
-        cost_matrix = []
-        for a in group_a:
-            row = []
-            for b in group_b:
-                p_a = elo_win_prob(a.skill, b.skill)
-                churn_a = (
-                    p_a * churn_probability(a.history, "W", a.matches_played)
-                    + (1.0 - p_a) * churn_probability(a.history, "L", a.matches_played)
-                )
-                churn_b = (
-                    (1.0 - p_a) * churn_probability(b.history, "W", b.matches_played)
-                    + p_a * churn_probability(b.history, "L", b.matches_played)
-                )
-                row.append(churn_a + churn_b)
-            cost_matrix.append(row)
-
-    if HAS_SCIPY:
-        row_ind, col_ind = linear_sum_assignment(np.array(cost_matrix))
-        return [(group_a[i], group_b[j]) for i, j in zip(row_ind, col_ind)]
+        return list(zip(group_a, group_b))
+    if mode != "eomm":
+        raise ValueError("unknown synthetic pairing policy")
+    cost_matrix = []
+    for a in group_a:
+        row = []
+        for b in group_b:
+            p_a = elo_win_prob(a.skill, b.skill)
+            churn_a = (
+                p_a * churn_probability(a.history, "W", a.matches_played)
+                + (1.0 - p_a) * churn_probability(a.history, "L", a.matches_played)
+            )
+            churn_b = (
+                (1.0 - p_a) * churn_probability(b.history, "W", b.matches_played)
+                + p_a * churn_probability(b.history, "L", b.matches_played)
+            )
+            row.append(churn_a + churn_b)
+        cost_matrix.append(row)
     pairs = _greedy_bipartite_match(cost_matrix)
     return [(group_a[i], group_b[j]) for i, j in pairs]
 
@@ -216,54 +186,57 @@ def compute_dda_profile(
     }
 
 
-def _normal_cdf(x: float) -> float:
-    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
-
-
-def compute_statistics(sbmm: List[int], eomm: List[int]) -> Dict[str, Optional[float]]:
-    n1, n2 = len(sbmm), len(eomm)
+def compute_statistics(sbmm: List[int], eomm: List[int]) -> dict:
+    """Descriptive effects only. Outcomes within each lobby share dependencies."""
+    if not sbmm or len(sbmm) != len(eomm):
+        raise ValueError("expected two nonempty, equally sized cohorts")
+    n = len(sbmm)
     mean_s, mean_e = statistics.mean(sbmm), statistics.mean(eomm)
-    med_s, med_e = statistics.median(sbmm), statistics.median(eomm)
-    uplift_pct = ((mean_e - mean_s) / mean_s * 100.0) if mean_s > 0 else 0.0
-
-    var_s = statistics.variance(sbmm) if n1 > 1 else 0.0
-    var_e = statistics.variance(eomm) if n2 > 1 else 0.0
-    pooled_sd = math.sqrt(((n1 - 1) * var_s + (n2 - 1) * var_e) / max(1, n1 + n2 - 2))
-    cohens_d = (mean_e - mean_s) / pooled_sd if pooled_sd > 0 else 0.0
-
-    if HAS_SCIPY:
-        u_stat, u_p = mannwhitneyu(eomm, sbmm, alternative="two-sided")
-        t_stat, t_p = ttest_ind(eomm, sbmm, equal_var=False)
-        u_val = float(u_stat)
-        u_p_val = float(u_p)
-        t_val = float(t_stat)
-        t_p_val = float(t_p)
-    else:
-        # Pure-stdlib normal-approximation fallback
-        se = math.sqrt(var_s / n1 + var_e / n2) if (var_s + var_e) > 0 else 1.0
-        t_val = (mean_e - mean_s) / se
-        t_p_val = 2.0 * (1.0 - _normal_cdf(abs(t_val)))
-        u_val = sum((1.0 if e > s else (0.5 if e == s else 0.0)) for e in eomm for s in sbmm)
-        mu_u = n1 * n2 / 2.0
-        sigma_u = math.sqrt(n1 * n2 * (n1 + n2 + 1) / 12.0)
-        z_u = (u_val - mu_u) / sigma_u if sigma_u > 0 else 0.0
-        u_p_val = 2.0 * (1.0 - _normal_cdf(abs(z_u)))
-
-    rank_biserial_r = (2.0 * u_val) / (n1 * n2) - 1.0
+    counts_s, counts_e = Counter(sbmm), Counter(eomm)
+    u, lower = 0.0, 0
+    for count in sorted(counts_s.keys() | counts_e.keys()):
+        u += counts_e[count] * (lower + counts_s[count] / 2)
+        lower += counts_s[count]
+    pooled_sd = math.sqrt((statistics.variance(sbmm) + statistics.variance(eomm)) / 2) if n > 1 else 0
     return {
-        "n_per_group": n1,
-        "sbmm_mean_matches": round(mean_s, 2),
-        "sbmm_median_matches": round(med_s, 2),
-        "eomm_mean_matches": round(mean_e, 2),
-        "eomm_median_matches": round(med_e, 2),
-        "session_uplift_pct": round(uplift_pct, 2),
-        "mann_whitney_u": round(u_val, 1),
-        "mann_whitney_p": round(u_p_val, 6),
-        "rank_biserial_r": round(rank_biserial_r, 3),
-        "welch_t": round(t_val, 3),
-        "welch_p": round(t_p_val, 6),
-        "cohens_d": round(cohens_d, 3),
+        "n_per_group": n,
+        "sbmm_mean_matches": mean_s,
+        "sbmm_median_matches": statistics.median(sbmm),
+        "eomm_mean_matches": mean_e,
+        "eomm_median_matches": statistics.median(eomm),
+        "session_uplift_pct": (mean_e - mean_s) / mean_s * 100 if mean_s else None,
+        "mann_whitney_u": u,
+        "mann_whitney_p": None,
+        "rank_biserial_r": 2 * u / n**2 - 1,
+        "welch_t": None,
+        "welch_p": None,
+        "cohens_d": (mean_e - mean_s) / pooled_sd if pooled_sd else None,
     }
+
+
+def run_experiment(players, rounds, pool, seed, replicates):
+    seeds = random.Random(seed)
+    all_sbmm, all_eomm, differences, pairs = [], [], [], []
+    for _ in range(replicates):
+        cohort_seed = seeds.getrandbits(64)
+        sbmm = simulate_group(players, rounds, pool, "sbmm", random.Random(cohort_seed))
+        eomm = simulate_group(players, rounds, pool, "eomm", random.Random(cohort_seed))
+        difference = statistics.mean(eomm) - statistics.mean(sbmm)
+        differences.append(difference)
+        pairs.append({"seed": cohort_seed, "mean_difference_matches": difference})
+        all_sbmm.extend(sbmm)
+        all_eomm.extend(eomm)
+    bootstrap = random.Random(seeds.getrandbits(64))
+    samples = sorted(statistics.mean(bootstrap.choices(differences, k=replicates)) for _ in range(2000))
+    stats = compute_statistics(all_sbmm, all_eomm)
+    stats.update(n_per_group=players, total_per_policy=len(all_sbmm),
+                 mean_difference_matches=statistics.mean(differences),
+                 paired_bootstrap_95_interval_matches=[samples[49], samples[1949]],
+                 reached_round_cap_fraction={
+                     "sbmm": all_sbmm.count(rounds) / len(all_sbmm),
+                     "eomm": all_eomm.count(rounds) / len(all_eomm),
+                 }, replicates=pairs)
+    return stats
 
 
 def main() -> int:
@@ -275,6 +248,7 @@ def main() -> int:
     parser.add_argument("--max-hitbox", type=float, default=1.25, help="Max DDA hitbox radius multiplier.")
     parser.add_argument("--max-damage", type=float, default=1.18, help="Max DDA damage multiplier.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
+    parser.add_argument("--replicates", type=int, default=20, help="Independent paired cohorts, minimum 10.")
     parser.add_argument("--json", action="store_true", help="Output JSON instead of text summary.")
     args = parser.parse_args()
 
@@ -282,24 +256,24 @@ def main() -> int:
         parser.error("players must be even and >=20; matches >=1; pool-size >=2")
     if not 0 <= args.dda_struggle_threshold <= 1 or not 1 <= args.max_hitbox <= 1.25 or not 1 <= args.max_damage <= 1.18:
         parser.error("DDA parameters outside documented bounds")
-    n_per_group = args.players // 2
-    rng_sbmm = random.Random(args.seed)
-    rng_eomm = random.Random(args.seed)
-
-    sbmm_sessions = simulate_group(n_per_group, args.matches, args.pool_size, "sbmm", rng_sbmm)
-    eomm_sessions = simulate_group(n_per_group, args.matches, args.pool_size, "eomm", rng_eomm)
-
-    stats = compute_statistics(sbmm_sessions, eomm_sessions)
+    if args.replicates < 10:
+        parser.error("at least 10 paired cohorts are required")
+    stats = run_experiment(args.players // 2, args.matches, args.pool_size, args.seed, args.replicates)
     dda = compute_dda_profile(
         struggle_threshold=args.dda_struggle_threshold,
         max_hitbox=args.max_hitbox,
         max_damage=args.max_damage,
     )
-    payload = {"simulation": stats, "dda": dda, "scipy_enabled": HAS_SCIPY,
-               "limitations": ["Synthetic model with assumed churn weights; not empirical evidence.",
-                               "Session length measured in matches, not minutes.",
-                               "DDA profile is separate and not integrated into simulated match outcomes.",
-                               "Equal seeded initial populations; subsequent random streams diverge."]}
+    payload = {"provenance": {"kind": "synthetic", "generator": "simulate_eomm_dda",
+                              "seed": args.seed, "human_data": False},
+               "simulation": stats, "dda": dda, "scipy_enabled": False,
+               "design": {"players_per_cohort_per_policy": args.players // 2, "rounds": args.matches,
+                          "pool_size": args.pool_size, "paired_cohorts": args.replicates,
+                          "bootstrap_draws": 2000, "assignment": "adjacent_sbmm_vs_greedy_eomm"},
+               "limitations": ["Assumed churn weights with no empirical calibration.",
+                               "Endpoint is restricted match count, bounded by the round horizon.",
+                               "Bootstrap resamples independent paired cohorts and quantifies model variability only.",
+                               "DDA curve is independent of the matchmaking simulation."]}
 
     if args.json:
         print(json.dumps(payload, indent=2))
@@ -310,12 +284,8 @@ def main() -> int:
     print(f"Players/group: {stats['n_per_group']} | Max matches: {args.matches} | Pool size: {args.pool_size}")
     print(f"SBMM mean/median matches: {stats['sbmm_mean_matches']} / {stats['sbmm_median_matches']}")
     print(f"EOMM mean/median matches: {stats['eomm_mean_matches']} / {stats['eomm_median_matches']}")
-    print(f"EOMM session uplift: +{stats['session_uplift_pct']}%")
-    print(
-        f"Mann-Whitney U = {stats['mann_whitney_u']} (p={stats['mann_whitney_p']}), "
-        f"Rank-Biserial r = {stats['rank_biserial_r']}"
-    )
-    print(f"Welch's t = {stats['welch_t']} (p={stats['welch_p']}), Cohen's d = {stats['cohens_d']}")
+    print(f"Paired mean difference: {stats['mean_difference_matches']:+.3f} matches")
+    print(f"95% paired bootstrap interval: {stats['paired_bootstrap_95_interval_matches']}")
     print("\n=== DDA Bounded Intervention Curve ===")
     for pt in dda["curve"]:
         print(

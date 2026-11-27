@@ -1,0 +1,11 @@
+{
+  "mechanics": {
+    "walk": {"verb": "step", "feedback": "highlight the tile", "failure": "wall", "recovery": "choose another direction"},
+    "key": {"verb": "collect", "feedback": "show key on HUD", "failure": "gate stays closed", "recovery": "find the key"}
+  },
+  "levels": [
+    {"id": "intro", "grid": ["S.G"], "difficulty": 1, "mechanics": ["walk"]},
+    {"id": "gate", "grid": ["S.K", "#.G"], "difficulty": 2, "mechanics": ["walk", "key"], "requires_key": true, "move_budget": 4}
+  ],
+  "policy": {"max_difficulty_step": 2, "min_mechanic_sets": 2, "max_layout_similarity": 0.9}
+}

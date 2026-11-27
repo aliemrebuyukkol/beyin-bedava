@@ -1,0 +1,8 @@
+{
+  "plan": {
+    "meaningful_choice_rate": {"threshold": 0.75, "min_samples": 8, "method": "One prompt per person after the first gate", "population": "new players"},
+    "target_emotion_rate": {"threshold": 0.60, "min_samples": 8, "method": "Blind-code one free response per person for relief", "population": "new players"},
+    "input_feedback_p95_ms": {"threshold": 100, "min_samples": 50, "method": "Monotonic input and feedback timestamps", "population": "keyboard inputs on reference device"}
+  },
+  "observations": {}
+}

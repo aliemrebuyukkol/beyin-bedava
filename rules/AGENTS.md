@@ -1,2 +1,2 @@
-# Beyin-Bedava activation rules (v2)
+# Beyin-Bedava activation rules (v2.1)
 Activate only for explicit game intent or credible game-project evidence. Opening a project triggers read-only SCAN, not code changes. Find SKILL.md relative to installed skill or workspace; do not assume a host loads this file automatically. For a requested bug fix preserve scope; for implementation select relevant modules. No live billing, unsolicited monetization, churn-targeted matchmaking, hidden outcome manipulation, or destructive changes. Follow the skill's execution and quality protocols; report real test evidence and blockers. Non-game repositories remain untouched.
