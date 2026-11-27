@@ -28,6 +28,6 @@ MIT license.
 
 Beyin-Bedava 2.1.0 ile geliştirilen dört bölümlük bir Godot bulmacası. Plakalara yankı bırakarak kapıları aç ve istasyondan çık.
 
-**[Web sürümünü indir](https://github.com/aliemrebuyukkol/beyin-bedava/archive/refs/heads/gh-pages.zip)** · [Godot kaynak projesi ve çalıştırma talimatları](examples/yanki-rotasi/)
+[**Tarayıcıda oyna**](https://yanki-rotasi.kafamdakisey.chatgpt.site) (ChatGPT hesabıyla) · [Web sürümünü indir](https://github.com/aliemrebuyukkol/beyin-bedava/archive/refs/heads/gh-pages.zip)** · [Godot kaynak projesi ve çalıştırma talimatları](examples/yanki-rotasi/)
 
 Web paketini açtıktan sonra `OYNAT.txt` içindeki adımlarla tarayıcıda çalıştır.
