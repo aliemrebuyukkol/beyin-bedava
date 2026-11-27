@@ -1,0 +1,10 @@
+[
+  {
+    "topic": "engine",
+    "url": "https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html",
+    "checked_on": "2026-11-27",
+    "source_kind": "official",
+    "finding": "Godot supports running a project with --path and --headless. Script execution and project export have separate entry points.",
+    "applies_to": "The Godot Pulse Gate demo uses the real project scene and its own self-test flags. The installed engine must still accept the command."
+  }
+]

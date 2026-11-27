@@ -1,0 +1,42 @@
+{
+  "modules": [
+    {"path": "orchestration/integration.md", "focus": ["core"], "use": "Scope, research, project contract, and evidence exchange"},
+    {"path": "orchestration/execution.md", "focus": ["core"], "use": "Task ownership, worktree baseline, and checkpoints"},
+    {"path": "orchestration/quality.md", "focus": ["core"], "use": "Build, playable path, input, performance, save, and privacy gates"},
+    {"path": "intelligence/game-dna.md", "focus": ["design"], "use": "Player fantasy, core loop, and constraints"},
+    {"path": "intelligence/human-motivation.md", "focus": ["design", "experience"], "use": "Autonomy, competence, motivation, and playtest criteria"},
+    {"path": "intelligence/creative-mechanics.md", "focus": ["design"], "use": "Mechanic alternatives and risk-first prototypes"},
+    {"path": "intelligence/emotional-experience.md", "focus": ["experience"], "use": "Emotional outcomes and evidence requirements"},
+    {"path": "intelligence/game-feel.md", "focus": ["build", "experience"], "use": "Input, feedback, timing, and accessibility"},
+    {"path": "game-design/progression.md", "focus": ["design", "progression"], "use": "Progression, level pacing, failure, and recovery"},
+    {"path": "references/genre-and-engine-adapters.md", "focus": ["build"], "use": "Runtime integration points by engine and genre"},
+    {"path": "adapters/swift/README.md", "focus": ["build"], "engines": ["swift", "swift_spritekit", "swift_realitykit", "swift_scenekit", "spritekit", "realitykit", "scenekit"], "use": "Native Apple architecture and input"},
+    {"path": "adapters/flutter-flame/README.md", "focus": ["build"], "engines": ["flutter", "flutter_flame", "flame"], "use": "Flutter and Flame architecture"},
+    {"path": "adapters/DEMOS.md", "focus": ["examples"], "use": "Runnable engine examples and observed verification"},
+    {"path": "examples/game-profiles.md", "focus": ["examples"], "use": "Sample genre profiles and optional systems"},
+    {"path": "orchestration/skill-router.md", "focus": ["collaboration"], "use": "Cross-skill file ownership and conflict handling"},
+    {"path": "references/protection-and-audit-protocol.md", "focus": ["audit", "monetization"], "use": "Fairness, privacy, and safeguards"},
+    {"path": "orchestration/telemetry.md", "focus": ["telemetry"], "use": "Telemetry provenance, samples, validation, and interpretation"},
+    {"path": "references/math-and-algorithms.md", "focus": ["simulation"], "use": "Bounded assist and research-only simulation assumptions"},
+    {"path": "references/neurobiology-and-economy.md", "focus": ["economy", "monetization"], "use": "Economy balance and player wellbeing"},
+    {"path": "references/ads-and-iap-architecture.md", "focus": ["monetization"], "use": "Explicitly requested ads or billing integration"},
+    {"path": "references/bibliography.md", "focus": ["research"], "use": "Starting points for source verification"},
+    {"path": "references/design-sources.md", "focus": ["design", "research"], "use": "Design evidence, primary sources, and limitations"}
+  ],
+  "topics": {
+    "engine": {"focus": ["build", "audit"], "question": "Which engine version, entry point, and build/test interfaces apply to this project?"},
+    "player": {"focus": ["design", "experience", "progression"], "question": "Which player, device and accessibility assumptions can be checked with direct evidence?"},
+    "telemetry": {"focus": ["telemetry"], "question": "Which events, denominators, consent controls and collection rules apply?"},
+    "policy": {"focus": ["monetization"], "question": "What do the current official platform rules and the project's policies require?"},
+    "model": {"focus": ["simulation"], "question": "Which assumptions and uncertainty measures support the proposed synthetic model?"},
+    "sources": {"focus": ["research"], "question": "Which primary sources address the user's goal and identify remaining uncertainty?"}
+  },
+  "engine_sources": {
+    "godot": "https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html",
+    "unity": "https://docs.unity.com/en-us/engine/6000.0/manual/unity-editor/command-line-arguments/editor",
+    "unreal": "https://dev.epicgames.com/documentation/en-us/unreal-engine/run-automation-tests-in-unreal-engine",
+    "gamemaker": "https://manual.gamemaker.io/lts/en/Additional_Information/Project_Format.htm",
+    "roblox": "https://create.roblox.com/docs/projects/place-files",
+    "renpy": "https://www.renpy.org/doc/html/language_basics.html"
+  }
+}

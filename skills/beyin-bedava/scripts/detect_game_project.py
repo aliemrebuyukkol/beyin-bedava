@@ -20,7 +20,13 @@ from typing import Any, Dict, List, Set, Tuple
 
 SKIP_DIRS: Set[str] = {
     ".git",
+    ".agents",
+    ".beyin-bedava",
+    ".claude",
+    ".codex",
     ".godot",
+    ".build",
+    ".dart_tool",
     ".import",
     ".next",
     ".venv",
@@ -101,7 +107,7 @@ STATIC_RISK_PATTERNS: List[Tuple[str, str]] = [
 
 def _read_text_safe(path: Path, max_bytes: int = 120_000) -> str:
     try:
-        if path.stat().st_size > max_bytes:
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > max_bytes:
             return ""
         return path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
@@ -111,9 +117,13 @@ def _read_text_safe(path: Path, max_bytes: int = 120_000) -> str:
 def _collect_files(root: Path, max_files: int = 1200) -> List[Path]:
     collected: List[Path] = []
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
-        for fname in filenames:
-            collected.append(Path(dirpath) / fname)
+        directory = Path(dirpath)
+        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not (directory / d).is_symlink())
+        for fname in sorted(filenames):
+            path = directory / fname
+            if path.is_symlink() or not path.is_file():
+                continue
+            collected.append(path)
             if len(collected) >= max_files:
                 return collected
     return collected
@@ -128,8 +138,10 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
     if "project.godot" in basenames:
         evidence.append("Found project.godot")
         engine = "godot"
-        languages.add("gdscript")
-    elif any("ProjectSettings/ProjectVersion.txt" in r for r in rel_names) or any(f.suffix == ".unity" for f in files):
+        if not any(f.suffix == ".cs" for f in files):
+            languages.add("gdscript")
+    elif any(r == "ProjectSettings/ProjectVersion.txt" or r.endswith("/ProjectSettings/ProjectVersion.txt")
+             for r in rel_names) or any(f.suffix == ".unity" for f in files):
         evidence.append("Found Unity ProjectSettings or .unity scene")
         engine = "unity"
         languages.add("csharp")
@@ -137,6 +149,20 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
         evidence.append("Found Unreal .uproject file")
         engine = "unreal"
         languages.add("cpp")
+    elif any(f.suffix == ".yyp" for f in files):
+        evidence.append("Found a GameMaker .yyp project")
+        engine = "gamemaker"
+        languages.add("gml")
+    elif any(f.suffix in {".rbxl", ".rbxlx"} for f in files):
+        evidence.append("Found a Roblox place file")
+        engine = "roblox"
+        languages.add("luau")
+    elif any(f.suffix in {".rpgproject", ".rmmzproject"} for f in files):
+        evidence.append("Found an RPG Maker MV/MZ project marker")
+        engine = "rpg_maker"
+    elif any(f.suffix == ".rpy" and "game" in f.relative_to(root).parts[:-1] for f in files):
+        evidence.append("Found a Ren'Py script in a game directory")
+        engine = "renpy"
     elif "conf.lua" in basenames and any(f.name == "main.lua" for f in files):
         evidence.append("Found LÖVE2D conf.lua + main.lua")
         engine = "love2d"
@@ -144,40 +170,43 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
     else:
         engine = "non_game"
 
-    pkg_path = root / "package.json"
-    if pkg_path.exists():
-        pkg_text = _read_text_safe(pkg_path).lower()
-        web_engines = [
-            ("phaser", "web_phaser"),
-            ("pixi.js", "web_pixijs"),
-            ("three", "web_threejs"),
-            ("babylon", "web_babylon"),
-            ("kaboom", "web_canvas"),
-            ("excalibur", "web_canvas"),
-        ]
-        for dep, eng_name in web_engines:
-            if f'"{dep}' in pkg_text:
-                evidence.append(f"package.json references {dep}")
-                if engine == "non_game":
-                    engine = eng_name
+    try:
+        package = json.loads(_read_text_safe(root / "package.json") or "{}")
+    except ValueError:
+        package = {}
+    web_engines = {
+        "phaser": "web_phaser", "pixi.js": "web_pixijs", "three": "web_threejs",
+        "babylon": "web_babylon", "@babylonjs/core": "web_babylon",
+        "kaboom": "web_canvas", "excalibur": "web_canvas", "playcanvas": "web_playcanvas",
+    }
+    if isinstance(package, dict):
+        for field in ("dependencies", "devDependencies", "peerDependencies"):
+            dependencies = package.get(field)
+            if isinstance(dependencies, dict):
+                for dependency in sorted(dependencies.keys() & web_engines.keys()):
+                    evidence.append(f"package.json declares {dependency} in {field}")
+                    if engine == "non_game":
+                        engine = web_engines[dependency]
 
-    cargo_path = root / "Cargo.toml"
-    if cargo_path.exists():
-        cargo_text = _read_text_safe(cargo_path).lower()
-        if "bevy" in cargo_text or "macroquad" in cargo_text or "ggez" in cargo_text:
-            evidence.append("Cargo.toml references Rust game engine")
+    cargo_text = _read_text_safe(root / "Cargo.toml").lower()
+    for dependency in ("bevy", "macroquad", "ggez"):
+        if re.search(rf"(?m)^\s*(?:{dependency}\s*=|\[[^\]\n]*dependencies\.{dependency}\])", cargo_text):
+            evidence.append(f"Cargo.toml declares {dependency}")
             if engine == "non_game":
-                engine = "bevy"
+                engine = dependency
             languages.add("rust")
 
     for py_manifest in ("pyproject.toml", "requirements.txt"):
-        p = root / py_manifest
-        if p.exists():
-            txt = _read_text_safe(p).lower()
-            if "pygame" in txt or "arcade" in txt or "ursina" in txt:
-                evidence.append(f"{py_manifest} references Python game library")
+        source = _read_text_safe(root / py_manifest).lower()
+        for package_name in ("pygame", "arcade", "ursina"):
+            prefix = r"(?m)^[ 	]*"
+            if py_manifest == "pyproject.toml":
+                # PEP 621 dependencies and Poetry key/value declarations.
+                prefix = r"(?m)(?:^[ 	]*|^[ 	]*dependencies[ 	]*=[ 	]*\[(?:[^\n]*,)?)[ 	]*"
+            if re.search(rf"""{prefix}(?:"|')?{package_name}(?:-ce)?(?=["'\s<>=~!;\[\n]|$)""", source):
+                evidence.append(f"{py_manifest} declares {package_name}")
                 if engine == "non_game":
-                    engine = "pygame"
+                    engine = package_name
                 languages.add("python")
 
     # Native game evidence: framework plus gameplay marker (not just a 3D viewer).
@@ -214,6 +243,9 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
         ".py": "python",
         ".rs": "rust",
         ".lua": "lua",
+        ".luau": "luau",
+        ".rpy": "renpy",
+        ".gml": "gml",
     }
     game_loop_hits = 0
     for f in files:
@@ -227,7 +259,7 @@ def detect_engine(root: Path, files: List[Path]) -> Tuple[bool, str, List[str], 
                 game_loop_hits += 1
 
     if engine == "non_game" and game_loop_hits >= 2 and ("typescript" in languages or "javascript" in languages):
-        engine = "web_canvas" if ("typescript" in languages or "javascript" in languages) else "custom"
+        engine = "web_canvas"
         evidence.append(f"Detected {game_loop_hits} files with game loop/state markers")
 
     is_game = engine != "non_game"
@@ -316,7 +348,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
     iap_provider = "stripe_web" if engine.startswith("web_") else "mock"
 
     return {
-        "schemaVersion": "2.0.0",
+        "schemaVersion": "3.0.0",
         "gameGenre": genre,
         "transparency": {
             "discloseMatchmaking": True,

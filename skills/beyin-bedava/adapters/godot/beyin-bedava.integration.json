@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "game": {"name": "Godot Pulse Gate", "engine": "godot", "engine_version": "4.x"},
+  "checks": [
+    {
+      "id": "pulse_flow",
+      "focus": "build",
+      "description": "The actual Godot buttons block an early pulse, open the charged gate, and reset the scene.",
+      "expect": {"blocked": true, "opened": true, "reset": true}
+    }
+  ]
+}

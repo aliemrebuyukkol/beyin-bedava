@@ -7,3 +7,15 @@ venv/
 *.log
 .env
 .env.*
+.beyin-bedava/
+node_modules/
+dist/
+.godot/
+.build/
+.dart_tool/
+skills/beyin-bedava/adapters/unity/Library/
+skills/beyin-bedava/adapters/unity/Logs/
+skills/beyin-bedava/adapters/unity/Temp/
+skills/beyin-bedava/adapters/unity/UserSettings/
+skills/beyin-bedava/adapters/flutter-flame/demo/build/
+.flutter-plugins-dependencies

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:beyin-bedava:integration:v1",
+  "$defs": {
+    "label": {"type": "string", "minLength": 1, "maxLength": 160, "pattern": "\\S"},
+    "note": {"type": "string", "minLength": 1, "maxLength": 1200, "pattern": "\\S"},
+    "key": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+    "focus": {"enum": ["design", "build", "audit", "experience", "progression", "telemetry", "simulation", "economy", "monetization", "collaboration", "research", "examples"]},
+    "value": {"type": ["boolean", "number", "string", "null"], "maxLength": 500},
+    "values": {
+      "type": "object", "minProperties": 1, "maxProperties": 32,
+      "propertyNames": {"$ref": "#/$defs/key"},
+      "additionalProperties": {"$ref": "#/$defs/value"}
+    },
+    "manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "game", "checks"],
+      "properties": {
+        "version": {"const": 1},
+        "game": {
+          "type": "object", "additionalProperties": false,
+          "required": ["name", "engine"],
+          "properties": {
+            "name": {"$ref": "#/$defs/label"},
+            "engine": {"$ref": "#/$defs/key"},
+            "engine_version": {"$ref": "#/$defs/label"}
+          }
+        },
+        "checks": {
+          "type": "array", "maxItems": 100,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "focus", "description", "expect"],
+            "properties": {
+              "id": {"$ref": "#/$defs/key"}, "focus": {"$ref": "#/$defs/focus"},
+              "description": {"$ref": "#/$defs/note"}, "expect": {"$ref": "#/$defs/values"}
+            }
+          }
+        }
+      }
+    },
+    "research": {
+      "type": "array", "maxItems": 100,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["topic", "url", "checked_on", "source_kind", "finding", "applies_to"],
+        "properties": {
+          "topic": {"$ref": "#/$defs/key"},
+          "url": {"type": "string", "format": "uri", "pattern": "^https://", "maxLength": 800},
+          "checked_on": {"type": "string", "format": "date"},
+          "source_kind": {"enum": ["official", "primary", "secondary"]},
+          "finding": {"$ref": "#/$defs/note"},
+          "applies_to": {"$ref": "#/$defs/note"}
+        }
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "plan_id", "revision", "source", "checks"],
+      "properties": {
+        "version": {"const": 1},
+        "plan_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "revision": {"$ref": "#/$defs/label"},
+        "source": {"enum": ["runtime", "synthetic"]},
+        "checks": {
+          "type": "array", "maxItems": 100,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "observed", "artifact"],
+            "properties": {
+              "id": {"$ref": "#/$defs/key"},
+              "observed": {"$ref": "#/$defs/values"},
+              "artifact": {"$ref": "#/$defs/label"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

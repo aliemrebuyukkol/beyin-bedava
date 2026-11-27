@@ -13,6 +13,7 @@ SCRIPTS = SKILL / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import detect_game_project as detector
 import audit_telemetry as audit
+import install_skill as installer
 import simulate_eomm_dda as sim
 
 class SkillTests(unittest.TestCase):
@@ -21,6 +22,12 @@ class SkillTests(unittest.TestCase):
         jsonschema.Draft202012Validator.check_schema(schema)
         config = detector.build_recommended_config("other", "swift_spritekit")
         jsonschema.validate(config, schema)
+        release = json.loads((ROOT / "plugin.json").read_text())["version"]
+        self.assertEqual(config["schemaVersion"], release)
+        self.assertEqual(schema["properties"]["schemaVersion"]["default"], release)
+        self.assertEqual(installer.VERSION, release)
+        for version in ("2.0.0", "2.1.0"):
+            jsonschema.validate({**config, "schemaVersion": version}, schema)
         self.assertEqual(config["matchmaking"]["mode"], "disabled")
         self.assertFalse(config["dda"]["enabled"])
         self.assertFalse(config["adPlacements"]["enabled"])

@@ -1,0 +1,8 @@
+{
+  "goal": "Implement Pulse Gate and its HUD",
+  "baseline": "replace-with-current-git-sha",
+  "tasks": [
+    {"id": "rule", "owner": "beyin-bedava", "acceptance": "Insufficient charge blocks pulse. Reset restores initial state.", "files": ["game/gate.py"]},
+    {"id": "hud", "owner": "tasarim-vergisi", "acceptance": "HUD announces denied, success and reset states.", "depends": ["rule"], "files": ["ui/gate_hud.py"]}
+  ]
+}

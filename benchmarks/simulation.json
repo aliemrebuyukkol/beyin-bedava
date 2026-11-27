@@ -1,0 +1,166 @@
+{
+  "provenance": {
+    "kind": "synthetic",
+    "generator": "simulate_eomm_dda",
+    "seed": 42,
+    "human_data": false
+  },
+  "simulation": {
+    "n_per_group": 50,
+    "sbmm_mean_matches": 8.158,
+    "sbmm_median_matches": 7.0,
+    "eomm_mean_matches": 9.948,
+    "eomm_median_matches": 9.0,
+    "session_uplift_pct": 21.941652365775937,
+    "mann_whitney_u": 580366.5,
+    "mann_whitney_p": null,
+    "rank_biserial_r": 0.16073300000000001,
+    "welch_t": null,
+    "welch_p": null,
+    "cohens_d": 0.306072944030994,
+    "total_per_policy": 1000,
+    "mean_difference_matches": 1.7900000000000003,
+    "paired_bootstrap_95_interval_matches": [
+      1.5420000000000003,
+      2.0700000000000007
+    ],
+    "reached_round_cap_fraction": {
+      "sbmm": 0.021,
+      "eomm": 0.099
+    },
+    "replicates": [
+      {
+        "seed": 2053695854357871005,
+        "mean_difference_matches": 1.7999999999999998
+      },
+      {
+        "seed": 13679192365072849617,
+        "mean_difference_matches": 1.4000000000000004
+      },
+      {
+        "seed": 4517457392071889495,
+        "mean_difference_matches": 1.2800000000000011
+      },
+      {
+        "seed": 2574020394472462046,
+        "mean_difference_matches": 2.08
+      },
+      {
+        "seed": 1890702223848595625,
+        "mean_difference_matches": 1.8800000000000008
+      },
+      {
+        "seed": 13662908291426823533,
+        "mean_difference_matches": 1.5999999999999996
+      },
+      {
+        "seed": 10060236952204337488,
+        "mean_difference_matches": 2.7200000000000006
+      },
+      {
+        "seed": 10892664235628797826,
+        "mean_difference_matches": 0.7999999999999998
+      },
+      {
+        "seed": 586287033698423193,
+        "mean_difference_matches": 1.799999999999999
+      },
+      {
+        "seed": 1728372192399379054,
+        "mean_difference_matches": 2.280000000000001
+      },
+      {
+        "seed": 4291835990902352011,
+        "mean_difference_matches": 1.1199999999999992
+      },
+      {
+        "seed": 11105285438068160209,
+        "mean_difference_matches": 3.200000000000001
+      },
+      {
+        "seed": 10353144037217341363,
+        "mean_difference_matches": 1.8400000000000007
+      },
+      {
+        "seed": 13208230535885162025,
+        "mean_difference_matches": 1.1600000000000001
+      },
+      {
+        "seed": 12937162279754847113,
+        "mean_difference_matches": 2.1999999999999993
+      },
+      {
+        "seed": 7738774760351418614,
+        "mean_difference_matches": 1.9600000000000009
+      },
+      {
+        "seed": 8286444275301796832,
+        "mean_difference_matches": 0.8399999999999999
+      },
+      {
+        "seed": 5131712758418120108,
+        "mean_difference_matches": 1.92
+      },
+      {
+        "seed": 16035760590688802187,
+        "mean_difference_matches": 1.2799999999999994
+      },
+      {
+        "seed": 13997525239209781023,
+        "mean_difference_matches": 2.6400000000000006
+      }
+    ]
+  },
+  "dda": {
+    "struggle_threshold": 0.5,
+    "curve": [
+      {
+        "struggle_index": 0.0,
+        "hitbox_multiplier": 1.0,
+        "damage_multiplier": 1.0,
+        "bullet_magnetism": 0.0
+      },
+      {
+        "struggle_index": 0.25,
+        "hitbox_multiplier": 1.0,
+        "damage_multiplier": 1.0,
+        "bullet_magnetism": 0.0
+      },
+      {
+        "struggle_index": 0.5,
+        "hitbox_multiplier": 1.0,
+        "damage_multiplier": 1.0,
+        "bullet_magnetism": 0.0
+      },
+      {
+        "struggle_index": 0.75,
+        "hitbox_multiplier": 1.125,
+        "damage_multiplier": 1.09,
+        "bullet_magnetism": 0.125
+      },
+      {
+        "struggle_index": 1.0,
+        "hitbox_multiplier": 1.25,
+        "damage_multiplier": 1.18,
+        "bullet_magnetism": 0.25
+      }
+    ],
+    "critical_hp_threshold": 0.15,
+    "incoming_damage_factor_at_5pct_hp": 0.741
+  },
+  "scipy_enabled": false,
+  "design": {
+    "players_per_cohort_per_policy": 50,
+    "rounds": 20,
+    "pool_size": 20,
+    "paired_cohorts": 20,
+    "bootstrap_draws": 2000,
+    "assignment": "adjacent_sbmm_vs_minimum_cost_eomm"
+  },
+  "limitations": [
+    "Assumed churn weights with no empirical calibration.",
+    "Endpoint is restricted match count, bounded by the round horizon.",
+    "Bootstrap resamples independent paired cohorts and quantifies model variability only.",
+    "DDA curve is independent of the matchmaking simulation."
+  ]
+}

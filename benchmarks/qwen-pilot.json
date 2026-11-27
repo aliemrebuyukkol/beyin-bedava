@@ -1,0 +1,290 @@
+{
+  "benchmark_kind": "openai_compatible_chat",
+  "model_requested": "qwen2.5-coder-1.5b-instruct-q4-k-m",
+  "model_revision": "sha256:cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046",
+  "seed": 42,
+  "repeats_per_task": 2,
+  "modules": [
+    "SKILL.md",
+    "intelligence/creative-mechanics.md",
+    "intelligence/game-feel.md"
+  ],
+  "timeout_seconds": 90,
+  "tasks_sha256": "9a0bb87dc93083c12dea1d8f0c995a3f44de35d675dc9578396e903f7532b693",
+  "skill_context_sha256": "3565f9d8e7efe827fef22dba3a2874baad5c7a2197f0c2b9dc1be4c7a1b094a2",
+  "summary": {
+    "completed_pairs": 6,
+    "metrics": {
+      "creativity_proxy": {
+        "paired_n": 6,
+        "off_mean": 0.5,
+        "on_mean": 0.9444444444444444,
+        "paired_delta_on_minus_off": 0.4444444444444444
+      },
+      "code_quality": {
+        "paired_n": 6,
+        "off_mean": 0.8194444444444444,
+        "on_mean": 0.8194444444444444,
+        "paired_delta_on_minus_off": -1.850371707708594e-17
+      },
+      "task_completion": {
+        "paired_n": 6,
+        "off_mean": 0.4642857142857143,
+        "on_mean": 0.5396825396825397,
+        "paired_delta_on_minus_off": 0.07539682539682542
+      },
+      "error_rate": {
+        "paired_n": 6,
+        "off_mean": 0.20833333333333334,
+        "on_mean": 0.20833333333333334,
+        "paired_delta_on_minus_off": 4.625929269271485e-18
+      },
+      "input_tokens": {
+        "paired_n": 6,
+        "off_mean": 217,
+        "on_mean": 1990,
+        "paired_delta_on_minus_off": 1773
+      },
+      "cached_input_tokens": {
+        "paired_n": 6,
+        "off_mean": 213.5,
+        "on_mean": 1036.3333333333333,
+        "paired_delta_on_minus_off": 822.8333333333334
+      },
+      "output_tokens": {
+        "paired_n": 6,
+        "off_mean": 205.33333333333334,
+        "on_mean": 231.83333333333334,
+        "paired_delta_on_minus_off": 26.5
+      },
+      "total_tokens": {
+        "paired_n": 6,
+        "off_mean": 422.3333333333333,
+        "on_mean": 2221.8333333333335,
+        "paired_delta_on_minus_off": 1799.5
+      },
+      "seconds": {
+        "paired_n": 6,
+        "off_mean": 8.205616666666666,
+        "on_mean": 23.23356666666667,
+        "paired_delta_on_minus_off": 15.02795
+      }
+    },
+    "provider_error_rate": {
+      "off": 0,
+      "on": 0
+    }
+  },
+  "pairs": [
+    {
+      "task": "optional-assist",
+      "repeat": 2,
+      "order": [
+        "on",
+        "off"
+      ],
+      "inference_seed": 479341423,
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(0, min(6, 2 * failures - 2))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"Players must work together to achieve a common goal.\",\n      \"player_choice\": \"Players must choose to work together or not.\",\n      \"feedback\": \"Players who choose to work together receive extra seconds.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"Players must discover new information to progress.\",\n      \"player_choice\": \"Players must choose to discover new information or not.\",\n      \"feedback\": \"Players who choose to discover new information receive extra seconds.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"Players must move to a specific location to progress.\",\n      \"player_choice\": \"Players must choose to move to a specific location or not.\",\n      \"feedback\": \"Players who choose to move to a specific location receive extra seconds.\"\n    }\n  ]\n}",
+        "input_tokens": 1988,
+        "output_tokens": 214,
+        "cached_input_tokens": 0,
+        "total_tokens": 2202,
+        "seconds": 38.1271,
+        "creativity_proxy": 1.0,
+        "code_quality": 1.0,
+        "task_completion": 0.7142857142857143,
+        "error_rate": 0.0
+      },
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"min(0, max(0, 2 - failures))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If opt_in is 1 and competitive is 0, cooperation is 1. Otherwise, cooperation is 0.\",\n      \"player_choice\": \"The player can choose to help or not.\",\n      \"feedback\": \"If the player chooses to help, they receive extra seconds. If not, they do not receive extra seconds.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If opt_in is 1 and competitive is 0, discovery is 1. Otherwise, discovery is 0.\",\n      \"player_choice\": \"The player can choose to help or not.\",\n      \"feedback\": \"If the player chooses to help, they receive extra seconds. If not, they do not receive extra seconds.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"If opt_in is 1 and competitive is 0, position is 1. Otherwise, position is 0.\",\n      \"player_choice\": \"The player can choose to help or not.\",\n      \"feedback\": \"If the player chooses to help, they receive extra seconds. If not, they do not receive extra seconds.\"\n    }\n  ]\n}",
+        "input_tokens": 215,
+        "output_tokens": 283,
+        "cached_input_tokens": 209,
+        "total_tokens": 498,
+        "seconds": 11.8526,
+        "creativity_proxy": 1.0,
+        "code_quality": 1.0,
+        "task_completion": 0.5714285714285714,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "task": "pulse-gate",
+      "repeat": 2,
+      "order": [
+        "on",
+        "off"
+      ],
+      "inference_seed": 1581559892,
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(charge, 0) + (action == 1 ? 1 : 0)\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"Player can charge a gate from 0 to 3. Charging adds one capped at 3.\",\n      \"player_choice\": \"Player can choose to charge the gate.\",\n      \"feedback\": \"Gate is charged.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"Player can open a gate from 0 to 3. Opening a gate consumes all charge only when charge is 3.\",\n      \"player_choice\": \"Player can choose to open the gate.\",\n      \"feedback\": \"Gate is opened.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"Player can charge a gate from 0 to 3. Charging adds one capped at 3.\",\n      \"player_choice\": \"Player can choose to charge the gate.\",\n      \"feedback\": \"Gate is charged.\"\n    }\n  ]\n}",
+        "input_tokens": 2009,
+        "output_tokens": 225,
+        "cached_input_tokens": 125,
+        "total_tokens": 2234,
+        "seconds": 34.1191,
+        "creativity_proxy": 0.6666666666666666,
+        "code_quality": 0,
+        "task_completion": 0,
+        "error_rate": 1
+      },
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"if action == 0: return charge + 1 if charge < 3 else 3\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player charges a gate, they gain cooperation points.\",\n      \"player_choice\": \"The player can choose to charge the gate.\",\n      \"feedback\": \"The player gains cooperation points.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the player charges a gate, they discover new resources.\",\n      \"player_choice\": \"The player can choose to charge the gate.\",\n      \"feedback\": \"The player discovers new resources.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"Charging a gate does not change the player's position.\",\n      \"player_choice\": \"The player can choose to charge the gate.\",\n      \"feedback\": \"The player's position remains unchanged.\"\n    }\n  ]\n}",
+        "input_tokens": 236,
+        "output_tokens": 206,
+        "cached_input_tokens": 230,
+        "total_tokens": 442,
+        "seconds": 8.1416,
+        "creativity_proxy": 1.0,
+        "code_quality": 0,
+        "task_completion": 0,
+        "error_rate": 1
+      }
+    },
+    {
+      "task": "optional-assist",
+      "repeat": 1,
+      "order": [
+        "on",
+        "off"
+      ],
+      "inference_seed": 1453201078,
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"min(0, max(0, 6 - failures))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"Players must work together to achieve a common goal.\",\n      \"player_choice\": \"Players must choose to cooperate or not.\",\n      \"feedback\": \"Players receive positive feedback for cooperation, negative feedback for not cooperating.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"Players must discover new information or mechanics.\",\n      \"player_choice\": \"Players must choose to discover or not.\",\n      \"feedback\": \"Players receive positive feedback for discovery, negative feedback for not discovering.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"Players must move and interact with the game world.\",\n      \"player_choice\": \"Players must choose to move or interact.\",\n      \"feedback\": \"Players receive positive feedback for movement and interaction, negative feedback for not moving or interacting.\"\n    }\n  ]\n}",
+        "input_tokens": 1988,
+        "output_tokens": 213,
+        "cached_input_tokens": 1987,
+        "total_tokens": 2201,
+        "seconds": 10.4848,
+        "creativity_proxy": 1.0,
+        "code_quality": 1.0,
+        "task_completion": 0.5714285714285714,
+        "error_rate": 0.0
+      },
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(0, min(6, 2 * failures - 1))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player cooperates, they receive no extra seconds.\",\n      \"player_choice\": \"Cooperate\",\n      \"feedback\": \"You receive no extra seconds.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the player discovers something, they receive no extra seconds.\",\n      \"player_choice\": \"Discover\",\n      \"feedback\": \"You receive no extra seconds.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"If the player is in a specific position, they receive no extra seconds.\",\n      \"player_choice\": \"Position\",\n      \"feedback\": \"You receive no extra seconds.\"\n    }\n  ]\n}",
+        "input_tokens": 215,
+        "output_tokens": 185,
+        "cached_input_tokens": 214,
+        "total_tokens": 400,
+        "seconds": 6.8183,
+        "creativity_proxy": 0.0,
+        "code_quality": 1.0,
+        "task_completion": 0.2857142857142857,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "task": "practice-medals",
+      "repeat": 1,
+      "order": [
+        "on",
+        "off"
+      ],
+      "inference_seed": 1268073012,
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(0, min(7, (successes * 2) - hints))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"Players must work together to achieve a common goal.\",\n      \"player_choice\": \"Players must choose to cooperate or not.\",\n      \"feedback\": \"Players receive positive feedback for cooperation and negative feedback for not cooperating.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"Players must discover new information and learn from it.\",\n      \"player_choice\": \"Players must choose to discover or not.\",\n      \"feedback\": \"Players receive positive feedback for discovery and negative feedback for not discovering.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"Players must move and interact with the game world.\",\n      \"player_choice\": \"Players must choose to move or not.\",\n      \"feedback\": \"Players receive positive feedback for movement and negative feedback for not moving.\"\n    }\n  ]\n}",
+        "input_tokens": 1973,
+        "output_tokens": 216,
+        "cached_input_tokens": 126,
+        "total_tokens": 2189,
+        "seconds": 30.861,
+        "creativity_proxy": 1.0,
+        "code_quality": 1.0,
+        "task_completion": 0.8333333333333334,
+        "error_rate": 0.0
+      },
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(0, min(2*successes - hints, 7))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player cooperates, they receive a bonus.\",\n      \"player_choice\": \"Cooperate\",\n      \"feedback\": \"You receive a bonus!\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the player discovers something, they receive a hint.\",\n      \"player_choice\": \"Discover\",\n      \"feedback\": \"You receive a hint!\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"If the player moves to a new location, they receive a hint.\",\n      \"player_choice\": \"Move\",\n      \"feedback\": \"You receive a hint!\"\n    }\n  ]\n}",
+        "input_tokens": 200,
+        "output_tokens": 179,
+        "cached_input_tokens": 194,
+        "total_tokens": 379,
+        "seconds": 8.0674,
+        "creativity_proxy": 0.0,
+        "code_quality": 1.0,
+        "task_completion": 0.8333333333333334,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "task": "pulse-gate",
+      "repeat": 1,
+      "order": [
+        "off",
+        "on"
+      ],
+      "inference_seed": 68252793,
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(charge + (action == 0), 0)\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player charges a gate, they gain cooperation points.\",\n      \"player_choice\": \"Player chooses to charge a gate.\",\n      \"feedback\": \"Player gains cooperation points.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the player charges a gate, they gain discovery points.\",\n      \"player_choice\": \"Player chooses to charge a gate.\",\n      \"feedback\": \"Player gains discovery points.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"If the player charges a gate, they move forward.\",\n      \"player_choice\": \"Player chooses to charge a gate.\",\n      \"feedback\": \"Player moves forward.\"\n    }\n  ]\n}",
+        "input_tokens": 236,
+        "output_tokens": 187,
+        "cached_input_tokens": 235,
+        "total_tokens": 423,
+        "seconds": 7.1087,
+        "creativity_proxy": 1.0,
+        "code_quality": 0.9722222222222222,
+        "task_completion": 0.42857142857142855,
+        "error_rate": 0.08333333333333333
+      },
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"charge + action\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player charges a gate, the gate's charge increases by 1. If the gate is already charged to 3, it cannot be charged further.\",\n      \"player_choice\": \"The player can choose to charge a gate by pressing a specific key or button.\",\n      \"feedback\": \"The gate's charge is updated on the screen, showing the current charge level.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the gate is opened, the player can discover new information or resources. If the gate is closed, the player cannot discover anything.\",\n      \"player_choice\": \"The player can choose to open or close the gate by pressing a specific key or button.\",\n      \"feedback\": \"The gate's state is updated on the screen, showing whether it is open or closed.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"The gate's position is determined by its charge level. A higher charge level means the gate is further from the player.\",\n      \"player_choice\": \"The player can choose to open or close the gate by pressing a specific key or button.\",\n      \"feedback\": \"The gate's position is updated on the screen, showing its distance from the player.\"\n    }\n  ]\n}",
+        "input_tokens": 2009,
+        "output_tokens": 294,
+        "cached_input_tokens": 2008,
+        "total_tokens": 2303,
+        "seconds": 14.8384,
+        "creativity_proxy": 1.0,
+        "code_quality": 0.9166666666666666,
+        "task_completion": 0.2857142857142857,
+        "error_rate": 0.25
+      }
+    },
+    {
+      "task": "practice-medals",
+      "repeat": 2,
+      "order": [
+        "on",
+        "off"
+      ],
+      "inference_seed": 201209005,
+      "on": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(0, min(7, (successes * 2) - hints))\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"Players must work together to achieve a common goal.\",\n      \"player_choice\": \"Players must agree on a strategy and work together to achieve a common goal.\",\n      \"feedback\": \"Players must communicate and coordinate their actions to achieve a common goal.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"Players must discover new information or mechanics.\",\n      \"player_choice\": \"Players must explore the game world and discover new mechanics.\",\n      \"feedback\": \"Players must actively seek out new information and mechanics to improve their gameplay.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"Players must move and interact with the game world.\",\n      \"player_choice\": \"Players must move and interact with the game world.\",\n      \"feedback\": \"Players must actively move and interact with the game world to improve their gameplay.\"\n    }\n  ]\n}",
+        "input_tokens": 1973,
+        "output_tokens": 229,
+        "cached_input_tokens": 1972,
+        "total_tokens": 2202,
+        "seconds": 10.971,
+        "creativity_proxy": 1.0,
+        "code_quality": 1.0,
+        "task_completion": 0.8333333333333334,
+        "error_rate": 0.0
+      },
+      "off": {
+        "status": "completed",
+        "answer": "{\n  \"expression\": \"max(0, 2 * successes - hints)\",\n  \"mechanics\": [\n    {\n      \"axis\": \"cooperation\",\n      \"rule\": \"If the player cooperates, they receive a positive feedback.\",\n      \"player_choice\": \"Cooperate\",\n      \"feedback\": \"You are doing great! Keep up the good work.\"\n    },\n    {\n      \"axis\": \"discovery\",\n      \"rule\": \"If the player discovers something new, they receive a positive feedback.\",\n      \"player_choice\": \"Discover\",\n      \"feedback\": \"You found something interesting! Keep exploring.\"\n    },\n    {\n      \"axis\": \"position\",\n      \"rule\": \"If the player is in the right position, they receive a positive feedback.\",\n      \"player_choice\": \"Position\",\n      \"feedback\": \"You are in the right place! Keep moving forward.\"\n    }\n  ]\n}",
+        "input_tokens": 200,
+        "output_tokens": 192,
+        "cached_input_tokens": 199,
+        "total_tokens": 392,
+        "seconds": 7.2451,
+        "creativity_proxy": 0.0,
+        "code_quality": 0.9444444444444445,
+        "task_completion": 0.6666666666666666,
+        "error_rate": 0.16666666666666666
+      }
+    }
+  ]
+}
