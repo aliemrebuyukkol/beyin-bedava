@@ -43,10 +43,10 @@ The [Pulse Gate examples](skills/beyin-bedava/adapters/DEMOS.md) cover Swift, Sp
 python -m pip install -r requirements-test.txt
 python -m compileall -q skills/beyin-bedava/scripts benchmarks
 python -m unittest discover -s tests -v
-python benchmarks/run.py --model YOUR_CODEX_MODEL --repeats 3 --output /tmp/beyin-ab.json
+python benchmarks/run.py --model YOUR_CODEX_MODEL --repeats 4 --output /tmp/beyin-ab.json
 ```
 
-For OpenAI-compatible inference, supply `--chat-url https://your-provider/v1/chat/completions` and, when required, `--api-key-env NAME`. The benchmark randomizes order within paired tasks. It records deterministic task tests, rule quality, creativity indicators, errors, provider-reported tokens and latency. See the [benchmark method and results](benchmarks/REPORT.md).
+For OpenAI-compatible inference, supply `--chat-url https://your-provider/v1/chat/completions` and, when required, `--api-key-env NAME`. The benchmark counterbalances condition order within each task. It records deterministic task tests, rule quality, creativity indicators, errors, provider-reported tokens and latency. See the [benchmark method and results](benchmarks/REPORT.md).
 
 ## Migration
 

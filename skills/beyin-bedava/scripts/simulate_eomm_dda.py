@@ -56,27 +56,50 @@ class SyntheticPlayer:
     active: bool = True
 
 
-def _greedy_bipartite_match(cost_matrix: List[List[float]]) -> List[Tuple[int, int]]:
-    n = len(cost_matrix)
-    edges = []
-    for i in range(n):
-        for j in range(n):
-            edges.append((cost_matrix[i][j], i, j))
-    edges.sort(key=lambda x: x[0])
-    used_a, used_b = set(), set()
-    pairs: List[Tuple[int, int]] = []
-    for _, i, j in edges:
-        if i not in used_a and j not in used_b:
-            used_a.add(i)
-            used_b.add(j)
-            pairs.append((i, j))
-            if len(pairs) == n:
+def minimum_cost_assignment(costs: List[List[float]]) -> List[Tuple[int, int]]:
+    """Hungarian assignment for a square matrix, with deterministic tie ordering."""
+    size = len(costs)
+    if any(len(row) != size or any(not math.isfinite(cost) for cost in row) for row in costs):
+        raise ValueError("expected a square, finite cost matrix")
+    row_potential = [0.0] * (size + 1)
+    column_potential = [0.0] * (size + 1)
+    assigned_row = [0] * (size + 1)
+    parent = [0] * (size + 1)
+    for new_row in range(1, size + 1):
+        assigned_row[0] = new_row
+        column = 0
+        visited = [False] * (size + 1)
+        slack = [math.inf] * (size + 1)
+        while True:
+            visited[column] = True
+            row = assigned_row[column]
+            step, next_column = math.inf, 0
+            for candidate in range(1, size + 1):
+                if visited[candidate]:
+                    continue
+                reduced = costs[row - 1][candidate - 1] - row_potential[row] - column_potential[candidate]
+                if reduced < slack[candidate]:
+                    slack[candidate], parent[candidate] = reduced, column
+                if slack[candidate] < step:
+                    step, next_column = slack[candidate], candidate
+            for candidate in range(size + 1):
+                if visited[candidate]:
+                    row_potential[assigned_row[candidate]] += step
+                    column_potential[candidate] -= step
+                else:
+                    slack[candidate] -= step
+            column = next_column
+            if assigned_row[column] == 0:
                 break
-    return pairs
+        while column:
+            previous = parent[column]
+            assigned_row[column] = assigned_row[previous]
+            column = previous
+    return sorted((assigned_row[column] - 1, column - 1) for column in range(1, size + 1))
 
 
 def pair_pool(pool: List[SyntheticPlayer], mode: str) -> List[Tuple[SyntheticPlayer, SyntheticPlayer]]:
-    """Pair players in a lobby pool using adjacent SBMM or greedy experimental pairing."""
+    """Pair players in a lobby pool using adjacent SBMM or minimum-cost synthetic pairing."""
     if len(pool) < 2:
         return []
 
@@ -107,7 +130,7 @@ def pair_pool(pool: List[SyntheticPlayer], mode: str) -> List[Tuple[SyntheticPla
             )
             row.append(churn_a + churn_b)
         cost_matrix.append(row)
-    pairs = _greedy_bipartite_match(cost_matrix)
+    pairs = minimum_cost_assignment(cost_matrix)
     return [(group_a[i], group_b[j]) for i, j in pairs]
 
 
@@ -269,7 +292,7 @@ def main() -> int:
                "simulation": stats, "dda": dda, "scipy_enabled": False,
                "design": {"players_per_cohort_per_policy": args.players // 2, "rounds": args.matches,
                           "pool_size": args.pool_size, "paired_cohorts": args.replicates,
-                          "bootstrap_draws": 2000, "assignment": "adjacent_sbmm_vs_greedy_eomm"},
+                          "bootstrap_draws": 2000, "assignment": "adjacent_sbmm_vs_minimum_cost_eomm"},
                "limitations": ["Assumed churn weights with no empirical calibration.",
                                "Endpoint is restricted match count, bounded by the round horizon.",
                                "Bootstrap resamples independent paired cohorts and quantifies model variability only.",

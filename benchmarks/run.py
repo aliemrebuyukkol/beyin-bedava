@@ -189,13 +189,26 @@ def aggregate(pairs):
                                                                for p in pairs) for condition in ("off", "on")}}
 
 
+def paired_schedule(tasks, repeats, seed):
+    rng = random.Random(seed)
+    schedule = []
+    for task in tasks:
+        first = rng.choice(("off", "on"))
+        for repeat in range(repeats):
+            second = "on" if first == "off" else "off"
+            schedule.append((task, repeat, (first, second), rng.getrandbits(31)))
+            first = second
+    rng.shuffle(schedule)
+    return schedule
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True)
     parser.add_argument("--chat-url", help="OpenAI-compatible /v1/chat/completions URL. Defaults to Codex CLI.")
     parser.add_argument("--api-key-env", help="Optional environment variable containing a provider key.")
     parser.add_argument("--model-revision", help="Artifact checksum or provider model revision for the report.")
-    parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--repeats", type=int, default=4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--timeout", type=int, default=90)
     parser.add_argument("--task")
@@ -216,14 +229,9 @@ def main():
     if not tasks:
         parser.error("unknown task")
     context = "\n\n".join((SKILL / path).read_text(encoding="utf-8") for path in MODULES)
-    schedule = [(task, repeat) for task in tasks for repeat in range(args.repeats)]
-    rng = random.Random(args.seed)
-    rng.shuffle(schedule)
     pairs = []
-    for task, repeat in schedule:
-        order = ["off", "on"]
-        rng.shuffle(order)
-        seed = rng.getrandbits(31) if args.chat_url else None
+    for task, repeat, order, seed in paired_schedule(tasks, args.repeats, args.seed):
+        seed = seed if args.chat_url else None
         pair = {"task": task["id"], "repeat": repeat + 1, "order": order, "inference_seed": seed}
         for condition in order:
             prompt = prompt_for(task, context if condition == "on" else "")
@@ -241,6 +249,7 @@ def main():
         pairs.append(pair)
     report = {"benchmark_kind": "openai_compatible_chat" if args.chat_url else "real_codex_cli",
               "model_requested": args.model, "model_revision": args.model_revision, "seed": args.seed,
+              "condition_order": "counterbalanced_within_task",
               "repeats_per_task": args.repeats, "modules": MODULES, "timeout_seconds": args.timeout,
               "tasks_sha256": hashlib.sha256(task_bytes).hexdigest(),
               "skill_context_sha256": hashlib.sha256(context.encode()).hexdigest(),

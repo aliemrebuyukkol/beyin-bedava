@@ -9,105 +9,105 @@
     "n_per_group": 50,
     "sbmm_mean_matches": 8.158,
     "sbmm_median_matches": 7.0,
-    "eomm_mean_matches": 8.576,
-    "eomm_median_matches": 7.0,
-    "session_uplift_pct": 5.123804854130928,
-    "mann_whitney_u": 520622.5,
+    "eomm_mean_matches": 9.948,
+    "eomm_median_matches": 9.0,
+    "session_uplift_pct": 21.941652365775937,
+    "mann_whitney_u": 580366.5,
     "mann_whitney_p": null,
-    "rank_biserial_r": 0.041244999999999976,
+    "rank_biserial_r": 0.16073300000000001,
     "welch_t": null,
     "welch_p": null,
-    "cohens_d": 0.07590225822095847,
+    "cohens_d": 0.306072944030994,
     "total_per_policy": 1000,
-    "mean_difference_matches": 0.4180000000000002,
+    "mean_difference_matches": 1.7900000000000003,
     "paired_bootstrap_95_interval_matches": [
-      0.11600000000000019,
-      0.7360000000000004
+      1.5420000000000003,
+      2.0700000000000007
     ],
     "reached_round_cap_fraction": {
       "sbmm": 0.021,
-      "eomm": 0.034
+      "eomm": 0.099
     },
     "replicates": [
       {
         "seed": 2053695854357871005,
-        "mean_difference_matches": 1.12
+        "mean_difference_matches": 1.7999999999999998
       },
       {
         "seed": 13679192365072849617,
-        "mean_difference_matches": 1.2400000000000002
+        "mean_difference_matches": 1.4000000000000004
       },
       {
         "seed": 4517457392071889495,
-        "mean_difference_matches": -0.7999999999999989
+        "mean_difference_matches": 1.2800000000000011
       },
       {
         "seed": 2574020394472462046,
-        "mean_difference_matches": 0.16000000000000014
+        "mean_difference_matches": 2.08
       },
       {
         "seed": 1890702223848595625,
-        "mean_difference_matches": 1.2400000000000002
+        "mean_difference_matches": 1.8800000000000008
       },
       {
         "seed": 13662908291426823533,
-        "mean_difference_matches": 0.35999999999999943
+        "mean_difference_matches": 1.5999999999999996
       },
       {
         "seed": 10060236952204337488,
-        "mean_difference_matches": 0.3200000000000003
+        "mean_difference_matches": 2.7200000000000006
       },
       {
         "seed": 10892664235628797826,
-        "mean_difference_matches": 0.5999999999999996
+        "mean_difference_matches": 0.7999999999999998
       },
       {
         "seed": 586287033698423193,
-        "mean_difference_matches": -0.5200000000000005
+        "mean_difference_matches": 1.799999999999999
       },
       {
         "seed": 1728372192399379054,
-        "mean_difference_matches": 0.5200000000000014
+        "mean_difference_matches": 2.280000000000001
       },
       {
         "seed": 4291835990902352011,
-        "mean_difference_matches": 0.35999999999999943
+        "mean_difference_matches": 1.1199999999999992
       },
       {
         "seed": 11105285438068160209,
-        "mean_difference_matches": -0.11999999999999922
+        "mean_difference_matches": 3.200000000000001
       },
       {
         "seed": 10353144037217341363,
-        "mean_difference_matches": -0.20000000000000018
+        "mean_difference_matches": 1.8400000000000007
       },
       {
         "seed": 13208230535885162025,
-        "mean_difference_matches": 1.5600000000000005
+        "mean_difference_matches": 1.1600000000000001
       },
       {
         "seed": 12937162279754847113,
-        "mean_difference_matches": 0.08000000000000007
+        "mean_difference_matches": 2.1999999999999993
       },
       {
         "seed": 7738774760351418614,
-        "mean_difference_matches": 0.2400000000000002
+        "mean_difference_matches": 1.9600000000000009
       },
       {
         "seed": 8286444275301796832,
-        "mean_difference_matches": 0.16000000000000014
+        "mean_difference_matches": 0.8399999999999999
       },
       {
         "seed": 5131712758418120108,
-        "mean_difference_matches": 2.040000000000001
+        "mean_difference_matches": 1.92
       },
       {
         "seed": 16035760590688802187,
-        "mean_difference_matches": 0.5600000000000005
+        "mean_difference_matches": 1.2799999999999994
       },
       {
         "seed": 13997525239209781023,
-        "mean_difference_matches": -0.5600000000000005
+        "mean_difference_matches": 2.6400000000000006
       }
     ]
   },
@@ -155,7 +155,7 @@
     "pool_size": 20,
     "paired_cohorts": 20,
     "bootstrap_draws": 2000,
-    "assignment": "adjacent_sbmm_vs_greedy_eomm"
+    "assignment": "adjacent_sbmm_vs_minimum_cost_eomm"
   },
   "limitations": [
     "Assumed churn weights with no empirical calibration.",

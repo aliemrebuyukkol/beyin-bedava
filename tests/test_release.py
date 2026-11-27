@@ -166,6 +166,13 @@ class EvidenceTests(unittest.TestCase):
         self.assertFalse(result["DARK_PATTERN_detected"])
         self.assertEqual(rebound_test(["L", "L", "W"] * 100)["status"], "signal")
 
+    def test_synthetic_pairing_uses_global_minimum_cost(self):
+        costs = [[1.0, 2.0, 9.0], [2.0, 9.0, 9.0], [9.0, 3.0, 1.0]]
+        pairs = simulate_eomm_dda.minimum_cost_assignment(costs)
+        self.assertEqual(pairs, [(0, 1), (1, 0), (2, 2)])
+        self.assertEqual(simulate_eomm_dda.minimum_cost_assignment([[1.0, 1.0], [1.0, 1.0]]),
+                         [(0, 0), (1, 1)])
+
     def test_simulation_replicates_and_degenerate_statistics(self):
         args = (20, 5, 8, 42, 10)
         first = simulate_eomm_dda.run_experiment(*args)
@@ -207,6 +214,13 @@ class InstallationAndBenchmarkTests(unittest.TestCase):
         self.assertEqual(benchmark.grade(json.dumps(answer), task)["error_rate"], 1)
         answer["expression"] = "1 // charge"
         self.assertGreater(benchmark.grade(json.dumps(answer), task)["error_rate"], 0)
+
+    def test_benchmark_schedule_balances_which_condition_runs_first(self):
+        tasks = [{"id": "a"}, {"id": "b"}]
+        first = benchmark.paired_schedule(tasks, 4, 42)
+        self.assertEqual(first, benchmark.paired_schedule(tasks, 4, 42))
+        for task in tasks:
+            self.assertEqual(sum(item[2][0] == "off" for item in first if item[0] == task), 2)
 
     def test_benchmark_reports_provider_failure_separately(self):
         failed = {"status": "provider_error", "seconds": 1}

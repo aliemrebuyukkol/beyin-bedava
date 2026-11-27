@@ -7,7 +7,7 @@ import SwiftUI
 
 @main
 struct PulseGateApp: App {
-    var body: some Scene {
+    var body: some SwiftUI.Scene {
         WindowGroup("Pulse Gate") {
             GateView()
         }
