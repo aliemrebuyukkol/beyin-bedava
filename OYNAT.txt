@@ -1,4 +1,4 @@
-YANKI ROTASI
+YANKI ROTASI · MOBİL SÜRÜM
 
 Bu arşivi aç. Çıkardığın klasörün içinde aşağıdaki komutu çalıştır:
 
@@ -10,3 +10,6 @@ tarayıcı gerektirir. Oyun açıldıktan sonra internet bağlantısı gerekmez.
 Ok tuşları veya WASD ile hareket et. Plaka üzerindeyken Space ile yankı bırak.
 Z geri alır, H ipucu verir, R bölümü yeniden başlatır. Ekrandaki düğmelerle de
 oynayabilirsin. Açılan bölümler bu tarayıcıya kaydedilir.
+
+Altı bölüm telefonun dikey ve yatay düzenlerinde oynanabilir. Atölye ayarları
+ve isteğe bağlı yerel oturum ölçümü ekrandaki Atölye düğmesinden açılır.
