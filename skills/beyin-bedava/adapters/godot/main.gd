@@ -26,7 +26,8 @@ func _ready() -> void:
 		var won := opened and charge == 0 and status.text.contains("Gate open")
 		buttons[3].pressed.emit()
 		var reset := not opened and charge == 0
-		if denied and won and reset:
+		var evidence_ready := emit_evidence({"blocked": denied, "opened": won, "reset": reset})
+		if denied and won and reset and evidence_ready:
 			print("Pulse Gate: charge, blocked pulse, win and reset verified")
 			get_tree().quit()
 		else:
@@ -50,3 +51,25 @@ func play(action: String) -> void:
 
 func refresh() -> void:
 	status.text = "Gate open!" if opened else "Pulse Gate   •   Charge %d / 2" % charge
+
+func emit_evidence(observed: Dictionary) -> bool:
+	var plan_path := ""
+	var revision := ""
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--evidence-plan="):
+			plan_path = argument.trim_prefix("--evidence-plan=")
+		elif argument.begins_with("--revision="):
+			revision = argument.trim_prefix("--revision=")
+	if plan_path.is_empty():
+		return revision.is_empty()
+	var plan = JSON.parse_string(FileAccess.get_file_as_string(plan_path))
+	if not plan is Dictionary or not plan.has("plan_id") or revision.is_empty():
+		push_error("Evidence requires a readable integration plan and build revision")
+		return false
+	print("BEYIN_EVIDENCE " + JSON.stringify({
+		"version": 1, "plan_id": plan["plan_id"], "revision": revision,
+		"source": "runtime", "checks": [{
+			"id": "pulse_flow", "observed": observed, "artifact": "Godot Pulse Gate scene controls"
+		}]
+	}))
+	return true

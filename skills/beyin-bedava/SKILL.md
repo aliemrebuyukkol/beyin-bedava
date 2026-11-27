@@ -13,7 +13,7 @@ description: Design, implement, audit and improve digital games with game DNA, c
 - Use existing tools and engine; never invent capability or promise background execution.
 
 ## Route before loading references
-Read only the selected modules. Confirm engine and goal by inspecting project evidence; use paths relative to this SKILL.md, not a hardcoded installation path.
+For unfamiliar engines or multi-step integration, use the [research and integration workflow](orchestration/integration.md). Its catalog routes every reference and its planner selects module paths by focus. Read the selected modules. Confirm engine and goal by inspecting project evidence; use paths relative to this SKILL.md, not a hardcoded installation path.
 - **SCAN** (default on opening a workspace): read-only detector, no edits. Non-game or ambiguous evidence: stop auto-activation; explicit game intent can override.
 - **DESIGN**: [game DNA](intelligence/game-dna.md), [motivation](intelligence/human-motivation.md), [creative mechanics](intelligence/creative-mechanics.md), [progression](game-design/progression.md). For human-experience thresholds, use the [evaluation protocol](intelligence/emotional-experience.md). Deliver concrete rules, alternatives and playtest hypotheses.
 - **BUILD / IMPROVE** (explicit implementation request): [execution](orchestration/execution.md), [game feel](intelligence/game-feel.md), applicable engine [adapters](references/genre-and-engine-adapters.md). For runnable slices use the [engine demos](adapters/DEMOS.md). For native Apple use [Swift adapter](adapters/swift/README.md); for Flutter use [Flame adapter](adapters/flutter-flame/README.md). Select applicable modules only.
@@ -24,11 +24,11 @@ Read only the selected modules. Confirm engine and goal by inspecting project ev
 
 ## Execution sequence
 1. Inspect current branch, status, existing tests, engine and actual playable path. Run `python3 <skill-root>/scripts/detect_game_project.py <workspace> --format json` when available. Detector output is advisory.
-2. State Game DNA: player fantasy, meaningful verb, core loop, constraints, audience, failure/recovery, measurable acceptance criteria. For a narrow bug fix skip broad redesign.
+2. For unfamiliar frameworks or dependent decisions, record research questions and verify relevant primary sources before finalizing the plan. Carry unresolved assumptions into acceptance checks. State Game DNA: player fantasy, meaningful verb, core loop, constraints, audience, failure/recovery, measurable acceptance criteria. For a narrow bug fix skip broad redesign.
 3. Identify applicable modules and explicitly exclude irrelevant ones. For broad design, compare three distinct mechanics, including a low-complexity alternative; prototype the riskiest assumption.
 4. Implement small vertical slices. Preserve saves and existing visual identity. Keep game logic independent of UI, ad and billing providers. Use deterministic test seams and optional configuration. Never import mocked receipts or rewards into production.
 5. Follow [execution protocol](orchestration/execution.md) for resumable state, [quality gates](orchestration/quality.md) for evidence. Use [design collaboration](orchestration/skill-router.md) when another skill is available.
-6. Build, test and play the actual game where tools allow. Check touch, keyboard/controller if applicable, accessibility, loading/error/offline, resume, frame pacing and representative device budgets. Record commands and actual results. Report blocked checks honestly.
+6. Build, test and play the actual game where tools allow. For a custom engine use the [local runtime evidence contract](orchestration/integration.md). Check touch, keyboard/controller if applicable, accessibility, loading/error/offline, resume, frame pacing and representative device budgets. Record commands and actual results. Report blocked checks honestly.
 
 ## Applicable systems only
 - Matchmaking: disabled by default, fair SBMM only for applicable competitive games, with latency/region/wait constraints. No churn-targeted live pairing; EOMM is research/audit only.

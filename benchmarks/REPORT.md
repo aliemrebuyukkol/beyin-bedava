@@ -60,3 +60,11 @@ The [GGUF revision](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 | Tasarım Vergisi | The two-owner protocol was exercised through the ledger tests. Joint native-host execution remains unverified. |
 
 Use the [demo commands](../skills/beyin-bedava/adapters/DEMOS.md) and [README](../README.md) to rerun the checks. The [simulation artifact](simulation.json) is labeled synthetic and contains no observed player data.
+
+## Integration workflow verification
+
+The full Python suite has 34 tests after the integration workflow work. A custom terminal game and the Godot Pulse Gate scene supplied actual runtime observations through the same plan contract. The terminal example was outside the detector's named engines. The tests also exercised stale revisions, out-of-scope checks, synthetic-only evidence, research selection and task file ownership.
+
+A temporary checkout of Yankı Rotası at `f6a015b` ran its actual Godot smoke test and campaign audit. Its project-specific contract observed six reachable levels, a longest shortest path of 41 actions, four mechanic sets and zero exact or mirrored layouts. The generic verifier matched the selected observations at that revision.
+
+The Qwen measurements above use the benchmark context hashed in those run artifacts. See the [integration walkthrough](../skills/beyin-bedava/orchestration/integration.md) for current commands.

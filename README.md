@@ -14,6 +14,10 @@ Clone this repository. From its root, run the installer with the target game's e
 
 Use `check` to compare the installed files with this checkout. For an activation check, use a disposable project and run `prepare` in place of `install` after installing. Copy the printed positive and negative prompts into separate fresh sessions on that host. Save each final response as plain text and run `verify --project /path/to/game --response positive.txt --control negative.txt` with the same script and host. The verifier checks an unpredictable value read from the installed skill, plus a non-game control. Keep probe files out of version control and discard the temporary project after testing. An installation, a discovery result and a native response are separate checks. See the [Codex](https://developers.openai.com/codex/skills), [Claude Code](https://code.claude.com/docs/en/skills) and [Antigravity](https://antigravity.google/docs/skills) skill documentation.
 
+## Integrate with a game
+
+Use the [research and integration workflow](skills/beyin-bedava/orchestration/integration.md) to select from the full knowledge catalog, record source findings, plan the work, and validate engine-neutral runtime evidence. Projects based on custom or proprietary engines can declare their own checks through a versioned JSON contract. The game or its test runner supplies observations from its existing runtime. The repository includes a terminal game and a Godot scene as working producers.
+
 ## Workflows
 
 SCAN opens with a read-only project inspection. DESIGN, BUILD/IMPROVE, AUDIT, SIMULATE and MONETIZE/PROTECT load only the modules applicable to the goal. Monetization and adaptive difficulty are disabled by default. DDA is visible and opt-in where suitable. Churn and spending remain outside live competitive matchmaking. See the [skill](skills/beyin-bedava/SKILL.md).

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "game": {"name": "Terminal Pulse Gate", "engine": "terminal-lite", "engine_version": "1"},
+  "checks": [
+    {
+      "id": "pulse_flow",
+      "focus": "build",
+      "description": "An early pulse is blocked, a charged pulse opens the gate, and reset clears progress.",
+      "expect": {"blocked": true, "opened": true, "reset_charge": 0, "reset_opened": false}
+    }
+  ]
+}
