@@ -1,6 +1,6 @@
-# Beyin-Bedava 2.1.0 release evidence
+# Beyin-Bedava release evidence
 
-## Paired skill benchmark
+## Paired skill benchmark for 2.1.0
 
 The runner sends the same three game-design tasks to the same model with and without selected Beyin-Bedava context. Each pair gets its own fresh model requests. A fixed schedule seed randomizes task order, and opposite condition orders alternate within each task. The chat backend also sends the same seed within each pair. The on arm appends the skill entry point, creative mechanics and game feel modules. This measures the effect of presenting skill context for constrained tasks. Native discovery and activation have separate verification.
 
@@ -40,7 +40,7 @@ python benchmarks/run.py --chat-url http://127.0.0.1:4187/v1/chat/completions \
 
 The [GGUF revision](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/tree/f86cb2c1fa58255f8052cc32aeede1b7482d4361) and [llama.cpp build](https://github.com/ggml-org/llama.cpp/releases/tag/b12800) are public.
 
-## Local verification
+## Local verification for 2.1.0
 
 | Check | Observed result |
 | --- | --- |
@@ -61,7 +61,7 @@ The [GGUF revision](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 
 Use the [demo commands](../skills/beyin-bedava/adapters/DEMOS.md) and [README](../README.md) to rerun the checks. The [simulation artifact](simulation.json) is labeled synthetic and contains no observed player data.
 
-## Integration workflow verification
+## Integration workflow verification for 3.0.0
 
 The full Python suite has 34 tests after the integration workflow work. A custom terminal game and the Godot Pulse Gate scene supplied actual runtime observations through the same plan contract. The terminal example was outside the detector's named engines. The tests also exercised stale revisions, out-of-scope checks, synthetic-only evidence, research selection and task file ownership.
 

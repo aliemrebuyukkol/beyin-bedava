@@ -14,6 +14,8 @@ import tempfile
 from pathlib import Path
 
 NAME = "beyin-bedava"
+VERSION = "3.0.0"
+PROBE_PREFIX = "BB30"
 SOURCE = Path(__file__).resolve().parents[1]
 PROBE = Path("resources/activation-probe.txt")
 HOSTS = {
@@ -76,7 +78,7 @@ def matching(destination):
 
 async def codex_discovery(project, installed):
     messages = [
-        {"id": 0, "method": "initialize", "params": {"clientInfo": {"name": NAME, "version": "2.1.0"}}},
+        {"id": 0, "method": "initialize", "params": {"clientInfo": {"name": NAME, "version": VERSION}}},
         {"method": "initialized"},
         {"id": 1, "method": "skills/list", "params": {"cwds": [str(project)], "forceReload": True}},
     ]
@@ -113,7 +115,7 @@ async def codex_discovery(project, installed):
 
 def proof(probe, host, response, control):
     token = probe.read_text(encoding="utf-8").strip()
-    if not re.fullmatch(rf"BB21-{re.escape(host)}-[a-f0-9]{{32}}", token):
+    if not re.fullmatch(rf"{PROBE_PREFIX}-{re.escape(host)}-[a-f0-9]{{32}}", token):
         raise ValueError("prepare a new activation probe for this host")
     return response.strip() == token and control.strip() == "CONTROL_OK"
 
@@ -146,7 +148,7 @@ def main():
                 raise ValueError("Codex did not report the enabled project skill")
         if args.command == "prepare":
             with (destination / PROBE).open("x", encoding="utf-8") as handle:
-                handle.write(f"BB21-{args.host}-{secrets.token_hex(16)}\n")
+                handle.write(f"{PROBE_PREFIX}-{args.host}-{secrets.token_hex(16)}\n")
             result.update(positive_prompt=f"{prefix} {ACTIVATE}", negative_prompt=CONTROL)
         if args.command == "verify":
             if args.response is None or args.control is None:

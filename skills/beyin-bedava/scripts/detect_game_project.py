@@ -348,7 +348,7 @@ def build_recommended_config(genre: str, engine: str) -> Dict[str, Any]:
     iap_provider = "stripe_web" if engine.startswith("web_") else "mock"
 
     return {
-        "schemaVersion": "2.1.0",
+        "schemaVersion": "3.0.0",
         "gameGenre": genre,
         "transparency": {
             "discloseMatchmaking": True,

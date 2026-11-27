@@ -1,8 +1,10 @@
 # Changelog
 
-## 2.1.0
+## 3.0.0
 
 - Added a scoped knowledge catalog, source-linked research plans, and a versioned runtime verification contract with Godot and custom terminal producers. Extended project detection and corrected engine labels.
+
+## 2.1.0
 
 - Added a persistent Python task ledger with a task graph, lease fencing, checkpoints, bounded retries and coordinated file ownership for Beyin-Bedava and Tasarım Vergisi.
 - Added executable Pulse Gate examples for Swift, SpriteKit, RealityKit, Unity, Godot, Three.js and Flutter/Flame.

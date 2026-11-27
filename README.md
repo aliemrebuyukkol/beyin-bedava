@@ -1,4 +1,4 @@
-# Beyin-Bedava 2.1.0
+# Beyin-Bedava 3.0.0
 
 Game design intelligence for player-first mechanics, motivation, game feel and progression. The skill chooses relevant modules for each task. Python tools make planning, recovery and quality checks reproducible.
 
@@ -54,6 +54,6 @@ For OpenAI-compatible inference, supply `--chat-url https://your-provider/v1/cha
 
 ## Migration
 
-Existing 2.0 configurations remain readable. Newly emitted configurations identify 2.1.0. Review 1.x configs before opting into eligible features. The detector leaves existing files in place. Audit inputs from 2.0 can produce incomplete coverage until provenance, store applicability, interval sample counts and DDA comparison context are supplied. The simulation retains descriptive output fields and omits player-level p-values because players share lobbies. See the [changelog](CHANGELOG.md).
+Existing 2.0 and 2.1 configurations remain readable. Newly emitted configurations identify 3.0.0. Review 1.x configs before opting into eligible features. The detector leaves existing files in place. Audit inputs from 2.0 can produce incomplete coverage until provenance, store applicability, interval sample counts and DDA comparison context are supplied. The simulation retains descriptive output fields and omits player-level p-values because players share lobbies. See the [changelog](CHANGELOG.md).
 
 MIT license.
