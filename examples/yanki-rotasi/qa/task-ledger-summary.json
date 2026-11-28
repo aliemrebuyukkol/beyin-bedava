@@ -1,0 +1,100 @@
+{
+  "plan": {
+    "goal": "Mobil Yankı Rotası vitrini",
+    "baseline": "14e357ba0a3587fd46e1236591396c08985a1581"
+  },
+  "tasks": [
+    {
+      "id": "rules",
+      "owner": "beyin-bedava",
+      "state": "verified",
+      "attempts": 1,
+      "evidence": "Godot BFS solved and replayed all six routes in 9, 15, 23, 27, 32 and 41 actions.",
+      "depends": [],
+      "files": [
+        "examples/yanki-rotasi/game/board.gd",
+        "examples/yanki-rotasi/game/levels.gd",
+        "examples/yanki-rotasi/game/puzzle.gd"
+      ]
+    },
+    {
+      "id": "mobile",
+      "owner": "beyin-bedava",
+      "state": "verified",
+      "attempts": 2,
+      "evidence": "Chromium rendered 320×568, 390×844, 844×390 and 1080×760. Touch completed level one and exported a nine-action JSON.",
+      "depends": [
+        "rules"
+      ],
+      "files": [
+        "examples/yanki-rotasi/game/main.gd",
+        "examples/yanki-rotasi/game/metrics.gd",
+        "examples/yanki-rotasi/project.godot"
+      ]
+    },
+    {
+      "id": "qa",
+      "owner": "beyin-bedava",
+      "state": "verified",
+      "attempts": 1,
+      "evidence": "Repository 10 tests, four evidence validator tests, six-level Godot smoke, synthetic simulation and two real paired benchmark trials ran.",
+      "depends": [
+        "mobile"
+      ],
+      "files": [
+        "README.md",
+        "examples/yanki-rotasi/README.md",
+        "examples/yanki-rotasi/tests/smoke.gd",
+        "examples/yanki-rotasi/tools/check_session.py"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "task": "rules",
+      "action": "claim",
+      "detail": "beyin-bedava"
+    },
+    {
+      "task": "rules",
+      "action": "finish",
+      "detail": "Godot BFS solved and replayed all six routes in 9, 15, 23, 27, 32 and 41 actions."
+    },
+    {
+      "task": "mobile",
+      "action": "claim",
+      "detail": "beyin-bedava"
+    },
+    {
+      "task": "mobile",
+      "action": "checkpoint",
+      "detail": "{\"next\":\"Verify the compressed Web export on real Chromium with phone dimensions.\"}"
+    },
+    {
+      "task": "mobile",
+      "action": "fail",
+      "detail": "Managed preview relay timed out after a concrete retry."
+    },
+    {
+      "task": "mobile",
+      "action": "claim",
+      "detail": "beyin-bedava"
+    },
+    {
+      "task": "mobile",
+      "action": "finish",
+      "detail": "Chromium rendered 320×568, 390×844, 844×390 and 1080×760. Touch completed level one and exported a nine-action JSON."
+    },
+    {
+      "task": "qa",
+      "action": "claim",
+      "detail": "beyin-bedava"
+    },
+    {
+      "task": "qa",
+      "action": "finish",
+      "detail": "Repository 10 tests, four evidence validator tests, six-level Godot smoke, synthetic simulation and two real paired benchmark trials ran."
+    }
+  ],
+  "file_scope": "The mobile claim accepted game/main.gd and rejected game/puzzle.gd, which was reserved for rules."
+}

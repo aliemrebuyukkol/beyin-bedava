@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "source": "synthetic",
+  "levels": {"1": {"actions": 12, "blocked": 3, "hints": 1, "undos": 0, "resets": 0, "wins": 1}},
+  "render_feedback": {"samples_ms": [], "p95_ms": null}
+}

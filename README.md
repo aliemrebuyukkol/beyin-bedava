@@ -58,3 +58,11 @@ For OpenAI-compatible inference, supply `--chat-url https://your-provider/v1/cha
 Existing 2.0, 2.1, and 3.0 configurations remain readable. Newly emitted configurations identify 3.1.0, and modular configurations can declare only `schemaVersion`, `gameGenre`, and `enabledModules`. Review 1.x configs before opting into eligible features. The detector leaves existing files in place. Audit inputs from 2.0 can produce incomplete coverage until provenance, store applicability, interval sample counts and DDA comparison context are supplied. The simulation retains descriptive output fields and omits player-level p-values because players share lobbies. See the [changelog](CHANGELOG.md).
 
 MIT license.
+
+## Örnek proje · Yankı Rotası
+
+Beyin-Bedava 2.1.0 ile geliştirilen telefon ve masaüstü düzenleri olan altı bölümlük bir Godot bulmacası. Plakalara yankı bırakarak kapıları aç ve istasyondan çık.
+
+[**Tarayıcıda oyna**](https://yanki-rotasi.kafamdakisey.chatgpt.site) (ChatGPT hesabıyla) · [Web sürümünü indir](https://github.com/aliemrebuyukkol/beyin-bedava/archive/refs/heads/gh-pages.zip) · [Godot kaynak projesi ve çalıştırma talimatları](examples/yanki-rotasi/)
+
+Web paketini açtıktan sonra `OYNAT.txt` içindeki adımlarla tarayıcıda çalıştır.

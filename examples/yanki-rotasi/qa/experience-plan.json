@@ -1,0 +1,8 @@
+{
+  "plan": {
+    "meaningful_choice_rate": {"threshold": 0.70, "min_samples": 20, "method": "İkinci yankıdan önce A ve B arasında seçim yapıp sebebini anlatan ilk kez oynayan kişiler.", "population": "Mobilde ilk kez oynayan katılımcılar"},
+    "target_emotion_rate": {"threshold": 0.60, "min_samples": 20, "method": "Üçüncü bölümden sonra keşif veya tatmin bildiren katılımcı oranı.", "population": "Mobilde ilk kez oynayan katılımcılar"},
+    "input_feedback_p95_ms": {"threshold": 85, "min_samples": 30, "method": "Godot input callback ile frame_post_draw arasındaki süre, her cihaz ayrı raporlanır.", "population": "Ölçümü açmış yerel çalışma oturumu"}
+  },
+  "observations": {}
+}
