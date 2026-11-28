@@ -129,7 +129,12 @@ def scoped_research(catalog, focus, engine, notes, schema):
     return topics
 
 
-def plan_tasks(focus, topics, ownership, branch_agents=False, new_project=False):
+MONETIZATION_CHOICES = ("ask", "none", "ads", "paywall", "both")
+
+
+def plan_tasks(focus, topics, ownership, branch_agents=False, new_project=False, monetization_choice="ask"):
+    if monetization_choice not in MONETIZATION_CHOICES:
+        raise ValueError(f"unsupported monetization_choice: {monetization_choice}")
     if not branch_agents:
         steps = [
             ("inspect", "Confirm the game root, owned source files, engine version, and existing test paths."),
@@ -186,6 +191,30 @@ def plan_tasks(focus, topics, ownership, branch_agents=False, new_project=False)
                 ["inspect"],
             ))
             wave1.append("branch_feel_ui")
+
+        if monetization_choice == "ask":
+            mon_desc = (
+                "Upon project approval, ask the user whether Ad Placements and/or Paywall/IAP integration is desired "
+                "(none | ads | paywall | both), and configure AdPlacementManager and/or StoreManager/Paywall UI accordingly."
+            )
+        elif monetization_choice == "none":
+            mon_desc = (
+                "User declined Ad and Paywall integration; keep adPlacements.enabled=false and purchaseScreens.enabled=false "
+                "and verify zero unsolicited monetization hooks."
+            )
+        else:
+            mon_desc = (
+                f"User approved monetization mode '{monetization_choice}'; configure ethical AdPlacementManager "
+                "(opt-in rewarded, natural-boundary interstitials with 2-loss suppression, safe banners) and/or "
+                "StoreManager Paywall/IAP UI (real-money prices, aligned bundles, 2-step confirm, odds/pity, Restore Purchases, sandbox/mock provider)."
+            )
+        raw_nodes.append((
+            "branch_monetization_gate",
+            "monetization-gate-agent",
+            mon_desc,
+            ["inspect"],
+        ))
+        wave1.append("branch_monetization_gate")
 
         prereqs_for_wire = wave1 if wave1 else ["inspect"]
         wire_Added = False
@@ -253,7 +282,7 @@ def digest(plan):
 
 
 def create_plan(root, goal, focus, baseline, explicit_game, notes, catalog, schema, ownership=(),
-                branch_agents=False, new_project=False):
+                branch_agents=False, new_project=False, monetization_choice="ask"):
     if not root.is_dir():
         raise ValueError("workspace directory not found")
     if not goal.strip() or not baseline.strip():
@@ -285,7 +314,10 @@ def create_plan(root, goal, focus, baseline, explicit_game, notes, catalog, sche
         and ("engines" not in entry or game["engine"] in entry["engines"] or new_project)
     ]
     topics = scoped_research(catalog, chosen, game["engine"], notes, schema)
-    tasks = plan_tasks(chosen, topics, ownership, branch_agents=branch_agents, new_project=new_project)
+    tasks = plan_tasks(
+        chosen, topics, ownership,
+        branch_agents=branch_agents, new_project=new_project, monetization_choice=monetization_choice,
+    )
     result = {
         "version": 1,
         "goal": goal,
@@ -300,6 +332,19 @@ def create_plan(root, goal, focus, baseline, explicit_game, notes, catalog, sche
     }
     if branch_agents:
         result["owners"] = sorted({task["owner"] for task in tasks} | {"beyin-bedava", "tasarim-vergisi"})
+        result["monetization_gate"] = {
+            "agent": "monetization-gate-agent",
+            "task_id": "branch_monetization_gate",
+            "choice": monetization_choice,
+            "requires_user_prompt": monetization_choice == "ask",
+            "options": ["none", "ads", "paywall", "both"],
+            "question_tr": (
+                "Proje onaylandı: Oyuna reklam yerleşimi (Rewarded / Interstitial / Banner) "
+                "ve/veya Paywall / Satınalma (IAP) ekranı entegre edilmesini istiyor musunuz?"
+            ),
+            "ads_enabled": monetization_choice in ("ads", "both"),
+            "paywall_enabled": monetization_choice in ("paywall", "both"),
+        }
         result["checklist"] = [
             {
                 "step": idx + 1,
@@ -380,12 +425,14 @@ def verify(plan, evidence, revision, schema):
 
 
 def run_autopilot(root, goal, focus, baseline, explicit_game, new_project, notes, catalog, schema,
-                  db_path, max_cycles=3, evidence_path=None, revision=None, ownership=()):
+                  db_path, max_cycles=3, evidence_path=None, revision=None, ownership=(),
+                  monetization_choice="ask"):
     if type(max_cycles) is not int or not 1 <= max_cycles <= 20:
         raise ValueError("max_cycles must be an integer between 1 and 20")
     plan = create_plan(
         root, goal, focus, baseline, explicit_game, notes, catalog, schema,
         ownership=ownership, branch_agents=True, new_project=new_project,
+        monetization_choice=monetization_choice,
     )
     ledger = Ledger(db_path)
     try:
@@ -465,6 +512,7 @@ def run_autopilot(root, goal, focus, baseline, explicit_game, new_project, notes
             "status": "completed" if final_audit["complete"] else "incomplete",
             "plan_id": plan["plan_id"],
             "project": plan["project"],
+            "monetization_gate": plan.get("monetization_gate"),
             "checklist": plan.get("checklist", []),
             "cycles_run": len(cycles),
             "cycles": cycles,
@@ -491,6 +539,8 @@ def main():
                       help="Generate a multi-agent branching DAG with itemized checklist and completion gate.")
     plan.add_argument("--new-project", action="store_true",
                       help="Plan for creating a brand-new game project from scratch.")
+    plan.add_argument("--monetization-choice", choices=MONETIZATION_CHOICES, default="ask",
+                      help="Post-approval Ad & Paywall decision gate (ask | none | ads | paywall | both).")
     plan.add_argument("--baseline", default="unrecorded")
     plan.add_argument("--explicit-game", action="store_true")
     plan.add_argument("--research", type=Path)
@@ -504,6 +554,8 @@ def main():
     autopilot.add_argument("--baseline", default="autopilot-baseline")
     autopilot.add_argument("--explicit-game", action="store_true")
     autopilot.add_argument("--new-project", action="store_true")
+    autopilot.add_argument("--monetization-choice", choices=MONETIZATION_CHOICES, default="ask",
+                           help="Post-approval Ad & Paywall decision gate (ask | none | ads | paywall | both).")
     autopilot.add_argument("--research", type=Path)
     autopilot.add_argument("--own", nargs=2, action="append", default=[], metavar=("TASK", "PATH"))
     autopilot.add_argument("--db", type=Path, required=True)
@@ -526,6 +578,7 @@ def main():
                 args.workspace.resolve(), args.goal, selected_focus,
                 args.baseline, args.explicit_game, notes, catalog, schema, args.own,
                 branch_agents=args.branch_agents, new_project=args.new_project,
+                monetization_choice=args.monetization_choice,
             )
             if args.output:
                 with args.output.open("x", encoding="utf-8") as stream:
@@ -540,6 +593,7 @@ def main():
                 args.db.resolve(), max_cycles=args.max_cycles,
                 evidence_path=args.evidence.resolve() if args.evidence else None,
                 revision=args.revision, ownership=args.own,
+                monetization_choice=args.monetization_choice,
             )
             print(json.dumps(result, indent=2, ensure_ascii=False))
             return 0 if result["status"] == "completed" else 1

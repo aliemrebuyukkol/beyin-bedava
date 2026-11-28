@@ -26,8 +26,8 @@ For full autonomous integration or new project creation where specialist agents 
 ```bash
 python3 scripts/plan_game_integration.py plan /path/to/game \
   --goal "Full Beyin-Bedava integration" \
-  --all-capabilities --branch-agents --baseline INITIAL_REVISION \
-  --output /tmp/full-plan.json
+  --all-capabilities --branch-agents --monetization-choice ask \
+  --baseline INITIAL_REVISION --output /tmp/full-plan.json
 python3 scripts/task_ledger.py --db /tmp/full-tasks.sqlite init /tmp/full-plan.json
 python3 scripts/task_ledger.py --db /tmp/full-tasks.sqlite ready
 python3 scripts/task_ledger.py --db /tmp/full-tasks.sqlite audit-completion --restart-incomplete

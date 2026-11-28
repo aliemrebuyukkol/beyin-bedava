@@ -254,6 +254,7 @@ class IntegrationTests(unittest.TestCase):
                     "branch_dna_mechanics",
                     "branch_progression_economy",
                     "branch_feel_ui",
+                    "branch_monetization_gate",
                     "wire",
                     "branch_capability_audits",
                     "verify",
@@ -261,16 +262,23 @@ class IntegrationTests(unittest.TestCase):
                 ],
             )
             self.assertEqual(len(plan["checklist"]), len(plan["tasks"]))
+            self.assertEqual(plan["monetization_gate"]["agent"], "monetization-gate-agent")
+            self.assertEqual(plan["monetization_gate"]["choice"], "ask")
+            self.assertTrue(plan["monetization_gate"]["requires_user_prompt"])
 
             db_path = Path(directory) / "autopilot.sqlite"
             auto = self.run_cli(
                 "autopilot", workspace,
                 "--goal", "Autopilot full completion",
-                "--new-project", "--db", db_path, "--max-cycles", "2",
+                "--new-project", "--monetization-choice", "both",
+                "--db", db_path, "--max-cycles", "2",
             )
             self.assertEqual(auto.returncode, 0, auto.stderr)
             payload = json.loads(auto.stdout)
             self.assertEqual(payload["status"], "completed")
+            self.assertEqual(payload["monetization_gate"]["choice"], "both")
+            self.assertTrue(payload["monetization_gate"]["ads_enabled"])
+            self.assertTrue(payload["monetization_gate"]["paywall_enabled"])
             self.assertTrue(payload["completion"]["complete"])
             self.assertEqual(payload["completion"]["completion_pct"], 100.0)
             self.assertEqual(payload["completion"]["incomplete_count"], 0)

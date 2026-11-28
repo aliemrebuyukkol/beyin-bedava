@@ -21,6 +21,7 @@ OWNERS = {
     "dna-design-agent",
     "progression-economy-agent",
     "feel-ui-agent",
+    "monetization-gate-agent",
     "engine-build-agent",
     "audit-safeguards-agent",
     "qa-verification-agent",
