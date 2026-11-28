@@ -21,6 +21,26 @@ python3 scripts/plan_game_integration.py plan /path/to/game \
 python3 scripts/task_ledger.py --db /tmp/gate-tasks.sqlite init /tmp/gate-plan.json
 ```
 
+For full autonomous integration or new project creation where specialist agents branch across every capability in the skill, list all items upfront, and self-heal until 100% completion:
+
+```bash
+python3 scripts/plan_game_integration.py plan /path/to/game \
+  --goal "Full Beyin-Bedava integration" \
+  --all-capabilities --branch-agents --baseline INITIAL_REVISION \
+  --output /tmp/full-plan.json
+python3 scripts/task_ledger.py --db /tmp/full-tasks.sqlite init /tmp/full-plan.json
+python3 scripts/task_ledger.py --db /tmp/full-tasks.sqlite ready
+python3 scripts/task_ledger.py --db /tmp/full-tasks.sqlite audit-completion --restart-incomplete
+```
+
+Or run the multi-cycle autopilot loop directly:
+
+```bash
+python3 scripts/plan_game_integration.py autopilot /path/to/game \
+  --goal "Full Beyin-Bedava integration" \
+  --db /tmp/full-tasks.sqlite --max-cycles 3
+```
+
 The default focus is `build`. Explicit focus values also include `design`, `progression`, `audit`, `telemetry`, `simulation`, `economy`, `monetization`, `collaboration`, `research` and `examples`. For a custom game the detector cannot identify, either provide its manifest or use `--explicit-game` to plan with an unknown engine. An explicit build focus supports planning and leaves edit authorization with the user. Use `--research path.json` to attach findings to a plan. The planner validates supplied findings and records those that apply to the selected focus. Research itself uses the host's web tools or supplied primary documents. [Research file example](../examples/integration-research.json)
 
 ## Runtime contract

@@ -13,7 +13,18 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
-OWNERS = {"beyin-bedava", "tasarim-vergisi"}
+OWNERS = {
+    "beyin-bedava",
+    "tasarim-vergisi",
+    "discovery-agent",
+    "research-agent",
+    "dna-design-agent",
+    "progression-economy-agent",
+    "feel-ui-agent",
+    "engine-build-agent",
+    "audit-safeguards-agent",
+    "qa-verification-agent",
+}
 OWNER_RE = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
 
 
@@ -256,6 +267,116 @@ class Ledger:
             return {"plan": dict(plan) if plan else None, "tasks": tasks,
                     "events": [dict(row) for row in self.db.execute("SELECT * FROM events ORDER BY seq")]}
 
+    def ready_tasks(self, owner=None):
+        if owner is not None and owner not in self.allowed_owners():
+            raise ValueError("invalid owner")
+        with self.transaction():
+            self.recover()
+            rows = self.db.execute("""
+                SELECT t.* FROM tasks t WHERE t.state='pending'
+                AND (? IS NULL OR t.owner=?)
+                AND NOT EXISTS (
+                    SELECT 1 FROM dependencies d JOIN tasks p ON p.id=d.prerequisite
+                    WHERE d.task=t.id AND p.state!='verified'
+                ) ORDER BY t.rowid
+            """, (owner, owner)).fetchall()
+            ready = []
+            for row in rows:
+                item = dict(row)
+                del item["token"]
+                item["checkpoint"] = json.loads(item["checkpoint"]) if item["checkpoint"] else None
+                item["depends"] = [dep[0] for dep in self.db.execute(
+                    "SELECT prerequisite FROM dependencies WHERE task=? ORDER BY prerequisite", (item["id"],))]
+                item["files"] = [f[0] for f in self.db.execute(
+                    "SELECT path FROM files WHERE task=? ORDER BY path", (item["id"],))]
+                ready.append(item)
+            return ready
+
+    def audit_completion(self, restart_incomplete=False, extra_attempts=2):
+        if type(extra_attempts) is not int or not 1 <= extra_attempts <= 100:
+            raise ValueError("extra_attempts must be an integer between 1 and 100")
+        with self.transaction():
+            self.recover()
+            rows = self.db.execute("SELECT * FROM tasks ORDER BY rowid").fetchall()
+            if not rows:
+                raise ValueError("ledger has no tasks")
+            restarted = []
+            if restart_incomplete:
+                # Reopen blocked tasks or verified tasks missing evidence
+                to_reset = set()
+                for row in rows:
+                    has_evidence = isinstance(row["evidence"], str) and bool(row["evidence"].strip())
+                    if row["state"] == "blocked" or (row["state"] == "verified" and not has_evidence):
+                        to_reset.add(row["id"])
+                # Also cascade reset to any verified task that depends on an unverified/reset prerequisite
+                unverified = {row["id"] for row in rows if row["state"] != "verified"} | to_reset
+                changed = True
+                while changed:
+                    changed = False
+                    for row in rows:
+                        tid = row["id"]
+                        if tid in unverified:
+                            continue
+                        deps = {d[0] for d in self.db.execute(
+                            "SELECT prerequisite FROM dependencies WHERE task=?", (tid,))}
+                        if deps & unverified:
+                            unverified.add(tid)
+                            to_reset.add(tid)
+                            changed = True
+                for tid in [r["id"] for r in rows if r["id"] in to_reset]:
+                    self.db.execute("""
+                        UPDATE tasks
+                        SET state='pending', token=NULL, lease=NULL,
+                            max_attempts=CASE WHEN state='blocked' THEN attempts+? ELSE max_attempts END
+                        WHERE id=?
+                    """, (extra_attempts, tid))
+                    self.log(tid, "auto-restart", f"reopened for 100% completion (+{extra_attempts} attempts)")
+                    restarted.append(tid)
+                rows = self.db.execute("SELECT * FROM tasks ORDER BY rowid").fetchall()
+
+            verified = []
+            incomplete = []
+            for row in rows:
+                has_evidence = isinstance(row["evidence"], str) and bool(row["evidence"].strip())
+                deps = [d[0] for d in self.db.execute(
+                    "SELECT prerequisite FROM dependencies WHERE task=? ORDER BY prerequisite", (row["id"],))]
+                files = [f[0] for f in self.db.execute(
+                    "SELECT path FROM files WHERE task=? ORDER BY path", (row["id"],))]
+                if row["state"] == "verified" and has_evidence:
+                    verified.append(row["id"])
+                else:
+                    incomplete.append({
+                        "id": row["id"],
+                        "owner": row["owner"],
+                        "state": row["state"],
+                        "acceptance": row["acceptance"],
+                        "attempts": row["attempts"],
+                        "max_attempts": row["max_attempts"],
+                        "problem": row["problem"],
+                        "depends": deps,
+                        "files": files,
+                    })
+
+            ready = []
+            verified_set = set(verified)
+            for item in incomplete:
+                if item["state"] == "pending" and set(item["depends"]) <= verified_set:
+                    ready.append(item["id"])
+
+            total = len(rows)
+            complete = (len(verified) == total and total > 0)
+            return {
+                "complete": complete,
+                "completion_pct": round((100.0 * len(verified)) / total, 2) if total else 0.0,
+                "total_tasks": total,
+                "verified_count": len(verified),
+                "verified_tasks": verified,
+                "incomplete_count": len(incomplete),
+                "incomplete_tasks": incomplete,
+                "ready_branches": ready,
+                "restarted_tasks": restarted,
+            }
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -263,6 +384,11 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("init").add_argument("plan", type=Path)
     commands.add_parser("status")
+    ready_cmd = commands.add_parser("ready")
+    ready_cmd.add_argument("--owner")
+    audit_cmd = commands.add_parser("audit-completion")
+    audit_cmd.add_argument("--restart-incomplete", action="store_true")
+    audit_cmd.add_argument("--attempts", type=int, default=2)
     claim = commands.add_parser("claim")
     claim.add_argument("owner")
     claim.add_argument("--task")
@@ -294,6 +420,12 @@ def main():
             ledger.init(json.loads(args.plan.read_text(encoding="utf-8")))
         elif args.command == "status":
             result = ledger.status()
+        elif args.command == "ready":
+            result = {"ready": ledger.ready_tasks(args.owner)}
+        elif args.command == "audit-completion":
+            result = ledger.audit_completion(args.restart_incomplete, args.attempts)
+            print(json.dumps(result, indent=2))
+            return 0 if result["complete"] else 1
         elif args.command == "claim":
             result = ledger.claim(args.owner, args.seconds, args.task)
         elif args.command == "reopen":

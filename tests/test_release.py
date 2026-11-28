@@ -126,6 +126,57 @@ class LedgerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unowned files: other.py"):
                 ledger.check_git_worktree("slice", reopened["token"], repo)
 
+    def test_ready_tasks_and_audit_completion_restart_loop(self):
+        plan = {
+            "goal": "Branched game integration",
+            "baseline": "384a1f6",
+            "tasks": [
+                {"id": "inspect", "owner": "discovery-agent", "acceptance": "inspect root"},
+                {"id": "dna", "owner": "dna-design-agent", "acceptance": "define dna",
+                 "depends": ["inspect"], "max_attempts": 1},
+                {"id": "prog", "owner": "progression-economy-agent", "acceptance": "define progression",
+                 "depends": ["inspect"]},
+                {"id": "verify", "owner": "qa-verification-agent", "acceptance": "verify all",
+                 "depends": ["dna", "prog"]},
+            ],
+        }
+        self.ledger.init(plan)
+        ready0 = [t["id"] for t in self.ledger.ready_tasks()]
+        self.assertEqual(ready0, ["inspect"])
+        c_ins = self.ledger.claim("discovery-agent", 60, "inspect")
+        self.ledger.update("inspect", c_ins["token"], "finish", "inspected")
+
+        # Now both dna and prog branches are ready in parallel
+        ready1 = [t["id"] for t in self.ledger.ready_tasks()]
+        self.assertEqual(ready1, ["dna", "prog"])
+
+        # Fail dna (exhausting max_attempts=1 -> blocked) and finish prog
+        c_dna = self.ledger.claim("dna-design-agent", 60, "dna")
+        self.ledger.update("dna", c_dna["token"], "fail", "missing prototype")
+        c_prog = self.ledger.claim("progression-economy-agent", 60, "prog")
+        self.ledger.update("prog", c_prog["token"], "finish", "progression balanced")
+
+        audit1 = self.ledger.audit_completion(restart_incomplete=False)
+        self.assertFalse(audit1["complete"])
+        self.assertEqual(audit1["completion_pct"], 50.0)
+        self.assertEqual([t["id"] for t in audit1["incomplete_tasks"]], ["dna", "verify"])
+
+        # Restart incomplete tasks automatically
+        audit_restart = self.ledger.audit_completion(restart_incomplete=True, extra_attempts=2)
+        self.assertEqual(audit_restart["restarted_tasks"], ["dna"])
+        self.assertEqual(audit_restart["ready_branches"], ["dna"])
+
+        # Finish dna and verify -> 100% completion
+        c_dna2 = self.ledger.claim("dna-design-agent", 60, "dna")
+        self.ledger.update("dna", c_dna2["token"], "finish", "prototype verified")
+        c_ver = self.ledger.claim("qa-verification-agent", 60, "verify")
+        self.ledger.update("verify", c_ver["token"], "finish", "runtime passed")
+
+        final_audit = self.ledger.audit_completion(restart_incomplete=False)
+        self.assertTrue(final_audit["complete"])
+        self.assertEqual(final_audit["completion_pct"], 100.0)
+        self.assertEqual(final_audit["incomplete_count"], 0)
+
 
 class GameplayTests(unittest.TestCase):
     def test_layout_balance_and_mechanic_coverage(self):

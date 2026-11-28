@@ -231,6 +231,50 @@ class IntegrationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "min <= max"):
                 self.plan(workspace)
 
+    def test_branch_agents_all_capabilities_new_project_and_autopilot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "new_game"
+            workspace.mkdir()
+            result = self.run_cli(
+                "plan", workspace,
+                "--goal", "Create new game with all capabilities",
+                "--all-capabilities", "--branch-agents", "--new-project",
+                "--own", "wire", "src/main.py",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            plan = json.loads(result.stdout)
+            self.assertEqual(plan["project"]["basis"], "new_project_intent")
+            self.assertEqual(set(plan["focus"]), set(self.schema["$defs"]["focus"]["enum"]))
+            task_ids = [t["id"] for t in plan["tasks"]]
+            self.assertEqual(
+                task_ids,
+                [
+                    "inspect",
+                    "research",
+                    "branch_dna_mechanics",
+                    "branch_progression_economy",
+                    "branch_feel_ui",
+                    "wire",
+                    "branch_capability_audits",
+                    "verify",
+                    "completion_gate",
+                ],
+            )
+            self.assertEqual(len(plan["checklist"]), len(plan["tasks"]))
+
+            db_path = Path(directory) / "autopilot.sqlite"
+            auto = self.run_cli(
+                "autopilot", workspace,
+                "--goal", "Autopilot full completion",
+                "--new-project", "--db", db_path, "--max-cycles", "2",
+            )
+            self.assertEqual(auto.returncode, 0, auto.stderr)
+            payload = json.loads(auto.stdout)
+            self.assertEqual(payload["status"], "completed")
+            self.assertTrue(payload["completion"]["complete"])
+            self.assertEqual(payload["completion"]["completion_pct"], 100.0)
+            self.assertEqual(payload["completion"]["incomplete_count"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
